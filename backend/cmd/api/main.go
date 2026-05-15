@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -60,6 +63,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("GET /healthz", handleHealthz)
+
 	mux.HandleFunc("/token", h.HandleToken)
 	mux.HandleFunc("/token/refresh", h.HandleTokenRefresh)
 	mux.HandleFunc("/register", h.HandleRegister)
@@ -81,18 +86,25 @@ func main() {
 
 	apiHandlers.RegisterRoutes(mux)
 
-	// Catch-all for undefined UI routes
-	mux.HandleFunc("/login", notFoundHandler)
-	mux.HandleFunc("/logout", notFoundHandler)
-	mux.HandleFunc("/dashboard", notFoundHandler)
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		slog.Warn("Not found", "path", r.URL.Path)
-		http.NotFound(w, r)
-	})
+	distPath := findDistPath()
+	var rootHandler http.Handler = mux
+	if distPath != "" {
+		slog.Info("Serving frontend SPA from", "path", distPath)
+		rootHandler = spaHandler(distPath, mux)
+	} else {
+		slog.Info("No frontend dist found, running API-only mode")
+		mux.HandleFunc("/login", notFoundHandler)
+		mux.HandleFunc("/logout", notFoundHandler)
+		mux.HandleFunc("/dashboard", notFoundHandler)
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			slog.Warn("Not found", "path", r.URL.Path)
+			http.NotFound(w, r)
+		})
+	}
 
 	httpSrv := &http.Server{
 		Addr:    ":" + cfg.Port,
-		Handler: logger.HttpMiddleware(mux),
+		Handler: logger.HttpMiddleware(rootHandler),
 	}
 
 	go func() {
@@ -117,6 +129,55 @@ func main() {
 	slog.Info("API Server disconnected.")
 }
 
+func handleHealthz(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "UI not found. Please use the API endpoints.", http.StatusNotFound)
+}
+
+func isAPIRoute(path string) bool {
+	return strings.HasPrefix(path, "/api/") ||
+		strings.HasPrefix(path, "/auth/") ||
+		strings.HasPrefix(path, "/token") ||
+		strings.HasPrefix(path, "/register") ||
+		strings.HasPrefix(path, "/revoke") ||
+		strings.HasPrefix(path, "/authorize") ||
+		strings.HasPrefix(path, "/.well-known/") ||
+		strings.HasPrefix(path, "/debug/") ||
+		strings.HasPrefix(path, "/healthz")
+}
+
+func findDistPath() string {
+	if p := os.Getenv("FRONTEND_DIST"); p != "" {
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	candidates := []string{"frontend/dist", "../frontend/dist"}
+	for _, c := range candidates {
+		if _, err := os.Stat(c); err == nil {
+			return c
+		}
+	}
+	return ""
+}
+
+func spaHandler(distPath string, apiMux http.Handler) http.Handler {
+	fileServer := http.FileServer(http.Dir(distPath))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if isAPIRoute(r.URL.Path) {
+			apiMux.ServeHTTP(w, r)
+			return
+		}
+		fPath := filepath.Join(distPath, filepath.Clean("/"+r.URL.Path))
+		info, err := os.Stat(fPath)
+		if os.IsNotExist(err) || err != nil || info.IsDir() {
+			r.URL.Path = "/"
+		}
+		fileServer.ServeHTTP(w, r)
+	})
 }

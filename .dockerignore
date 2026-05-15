@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+frontend/node_modules
+backend/node_modules
+
+# Build artifacts & caches
+.turbo
+frontend/.turbo
+backend/.turbo
+frontend/dist
+backend/bin
+*.exe
+
+# Logs
+*.log
+backend/go-errors.log
+frontend/tsc-errors.log
+frontend/vite-errors.log
+frontend/build.log
+
+# Environment files
+.env
+backend/.env
+frontend/.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+
+# Samples (not needed for deployment)
+samples
+
+# Docs
+*.md
+!README.md
