@@ -1,0 +1,74 @@
+# ============================================================
+# Root / Monorepo
+# ============================================================
+.env
+.env.local
+.env.*.local
+
+# Turborepo
+.turbo/
+
+
+# ============================================================
+# Node / React (frontend/)
+# ============================================================
+node_modules/
+frontend/node_modules/
+
+# Build output
+frontend/dist/
+frontend/build/
+
+# Vite cache
+frontend/.vite/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+frontend/tsconfig.tsbuildinfo
+
+# Test coverage
+frontend/coverage/
+
+# ============================================================
+# IDE & OS
+# ============================================================
+# VS Code (keep .vscode/settings.json if shared configs exist)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# JetBrains
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# ============================================================
+# Misc
+# ============================================================
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Session / scratch files
+session.txt
+
+samples/
+
+.cursor
+.vscode
+*.exe

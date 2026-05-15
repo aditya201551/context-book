@@ -1,0 +1,18 @@
+{
+  "$schema": "https://v2-9-14.turborepo.dev/schema.json",
+  "globalEnv": ["GOCACHE", "GOPATH", "GOROOT", "LocalAppData", "USERPROFILE", "HOME"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["bin/**", "dist/**"]
+    },
+
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

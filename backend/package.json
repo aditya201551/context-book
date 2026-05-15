@@ -1,0 +1,16 @@
+{
+  "name": "@context-book/backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:api": "go build -o bin/api ./cmd/api",
+    "build:mcp": "go build -o bin/mcp ./cmd/mcp",
+    "build": "npm run build:api && npm run build:mcp",
+    "dev:api": "go build -o bin/api_dev.exe ./cmd/api && bin\\api_dev.exe",
+    "dev:mcp": "go build -o bin/mcp_dev.exe ./cmd/mcp && bin\\mcp_dev.exe",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:mcp\" --kill-others --names \"API,MCP\" -c \"magenta,cyan\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
