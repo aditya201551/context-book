@@ -55,7 +55,7 @@ export default function Sidebar({ active, counts, onNavigate, collapsed = false,
         </div>
         {!collapsed && (
           <div>
-            <div className="brand-name">ContextBridge</div>
+            <div className="brand-name">ContextBook</div>
             <div className="brand-tag">Mnemosyne</div>
           </div>
         )}

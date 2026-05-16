@@ -1,8 +1,8 @@
-# ContextBridge
+# ContextBook
 
 > Persistent semantic memory for AI tools, built on the Model Context Protocol.
 
-ContextBridge is an open-source MCP server that gives AI tools (Claude, Cursor, Windsurf, etc.) long-term memory. Push context as **Books** and **Pages**, then semantically search across it — all powered by PostgreSQL + pgvector, pg_trgm, and Voyage AI embeddings.
+ContextBook is an open-source MCP server that gives AI tools (Claude, Cursor, Windsurf, etc.) long-term memory. Push context as **Books** and **Pages**, then semantically search across it — all powered by PostgreSQL + pgvector, pg_trgm, and Voyage AI embeddings.
 
 ## How It Works
 
@@ -63,7 +63,7 @@ All tools require a valid Bearer token and are scoped to the authenticated user.
 | `list_books` | Paginated list of Book metadata (no content) |
 | `get_book` | Retrieve all pages of a Book ordered by page index |
 | `search_pages` | Semantic search across all Books; returns matching pages with cosine similarity |
-| `readme` | Returns the ContextBridge usage guide; call once per session |
+| `readme` | Returns the ContextBook usage guide; call once per session |
 
 **Knowledge model:** A **Book** is a metadata container (title, source, tags). A **Page** is an atomic content chunk with a `VOYAGE_DIMENSION`-dim embedding (default 1024) and a real `token_count` from the Voyage API. Pages are addressed by composite key: `book_id` + `page_index`.
 
@@ -81,8 +81,8 @@ All tools require a valid Bearer token and are scoped to the authenticated user.
 Create a PostgreSQL database with the required extensions:
 
 ```sql
-CREATE DATABASE contextbridge_db;
-\c contextbridge_db
+CREATE DATABASE contextbook_db;
+\c contextbook_db
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 ```
@@ -141,7 +141,7 @@ For **Cursor**, add to `.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "contextbridge": {
+    "contextbook": {
       "url": "http://localhost:8081/mcp"
     }
   }

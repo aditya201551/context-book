@@ -1,8 +1,8 @@
-# ContextBridge — Architecture
+# ContextBook — Architecture
 
 ## System Overview
 
-ContextBridge is a personal AI memory store. AI tools (Claude, Cursor) connect over MCP to push and retrieve context. Users manage their library through a rich web dashboard with semantic search, tag clusters, and real-time stats. All data is stored in PostgreSQL with pgvector for semantic search and pg_trgm for fast text suggestions.
+ContextBook is a personal AI memory store. AI tools (Claude, Cursor) connect over MCP to push and retrieve context. Users manage their library through a rich web dashboard with semantic search, tag clusters, and real-time stats. All data is stored in PostgreSQL with pgvector for semantic search and pg_trgm for fast text suggestions.
 
 ```mermaid
 flowchart TB

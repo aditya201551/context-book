@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ==========================================
-# ContextBridge — MCP Server Dockerfile
+# ContextBook — MCP Server Dockerfile
 # ==========================================
 # This Dockerfile builds ONLY the MCP server.
 # Use it for the "mcp" Railway service.

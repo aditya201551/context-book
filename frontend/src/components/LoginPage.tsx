@@ -232,7 +232,7 @@ export default function LoginPage() {
             <OwlMark />
           </div>
           <div>
-            <div className="login-panel-name">ContextBridge</div>
+            <div className="login-panel-name">ContextBook</div>
             <div className="login-panel-tag">Mnemosyne &middot; Library of Memory</div>
           </div>
         </div>
@@ -264,7 +264,7 @@ export default function LoginPage() {
       <div className="login-form-wrap">
         <div className="login-form-inner">
           <div className="login-form-title">Welcome back</div>
-          <div className="login-form-sub">Sign in to your ContextBridge account.</div>
+          <div className="login-form-sub">Sign in to your ContextBook account.</div>
 
           <a href={githubURL} style={{ textDecoration: 'none', display: 'block' }}>
             <button className="login-oauth-btn">

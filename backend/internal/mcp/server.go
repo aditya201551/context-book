@@ -89,7 +89,7 @@ func (s *Server) registerResources() {
 	s.MCPServer.AddResource(&mcp.Resource{
 		Name:        "README",
 		Description: "A guide for AI agents on how to use ContextBook tools and the Knowledge Hierarchy.",
-		URI:         "contextbridge://instructions",
+		URI:         "contextbook://instructions",
 		MIMEType:    "text/markdown",
 	}, func(ctx context.Context, request *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		return &mcp.ReadResourceResult{

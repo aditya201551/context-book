@@ -395,7 +395,7 @@ function InstallTab() {
     'Open Claude (claude.ai) → Settings → Connectors',
     'Click "Add custom connector"',
     `Paste your MCP URL: ${MCP_URL}`,
-    'Sign in with your ContextBridge account when prompted',
+    'Sign in with your ContextBook account when prompted',
     'Authorize the connector — done.'
   ];
 
@@ -404,7 +404,7 @@ function InstallTab() {
       <div className="settings-section-head">
         <div>
           <h2 className="settings-section-title">Installation</h2>
-          <p className="settings-section-sub">Connect ContextBridge to your AI clients. Pick your client below — each method takes under a minute.</p>
+          <p className="settings-section-sub">Connect ContextBook to your AI clients. Pick your client below — each method takes under a minute.</p>
         </div>
         <div className="settings-endpoint-badge">
           <Icon name="link" size={12} />
@@ -452,7 +452,7 @@ function InstallTab() {
             <button className="btn btn-primary install-btn" onClick={() => showToast('Coming soon')}>
               <Icon name="arrDn" size={13}/> Download .mcpb
             </button>
-            <span className="install-meta mono">contextbridge-1.0.0.mcpb · 2.4 MB</span>
+            <span className="install-meta mono">contextbook-1.0.0.mcpb · 2.4 MB</span>
           </div>
           <div className="install-fineprint mono">
             Requires Claude Desktop 0.9+. Bundle is signed and verified at install time.

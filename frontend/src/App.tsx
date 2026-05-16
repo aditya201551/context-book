@@ -108,7 +108,7 @@ const AUTHORIZE = () => {
               <path d="M5 7 L7 9 M19 7 L17 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
           </div>
-          <span className="brand-name" style={{ fontSize: 16 }}>ContextBridge</span>
+          <span className="brand-name" style={{ fontSize: 16 }}>ContextBook</span>
         </div>
 
         {/* main card */}
@@ -141,7 +141,7 @@ const AUTHORIZE = () => {
             <em>{clientInfo.client_name}</em> wants to access your library
           </h1>
           <p className="authorize-sub">
-            Review the permissions below before granting access to your ContextBridge contexts and memory.
+            Review the permissions below before granting access to your ContextBook contexts and memory.
           </p>
 
           {/* info rows */}
@@ -433,7 +433,7 @@ function AppShell() {
       <div className="main">
         <div className="topbar">
           <div className="topbar-title">
-            <span>ContextBridge</span>
+            <span>ContextBook</span>
             <span style={{ color: 'var(--text-muted)', margin: '0 8px' }}>/</span>
             <span className="topbar-title-crumb" style={{ textTransform: 'capitalize' }}>{route}</span>
           </div>

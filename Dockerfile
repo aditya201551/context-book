@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ==========================================
-# ContextBridge — Multi-Service Dockerfile
+# ContextBook — Multi-Service Dockerfile
 # ==========================================
 # Build targets:
 #   - api  (default) → REST API + frontend static files
