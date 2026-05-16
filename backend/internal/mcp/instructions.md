@@ -30,9 +30,9 @@ Call `readme` once at the start of a session to load these instructions. You do 
 
 ### 2. Storing New Information
 
-1. Call `create_or_update_book` with a descriptive `title`, `source`, and `tags`. **`title` and `source` are required.** `tags` is optional and defaults to `[]`. Store the returned `book_id`.
+1. Call `create_or_update_book` with a descriptive `title` and optional `tags`. **`title` is required.** `tags` defaults to `[]`. The `source` is automatically detected from your client identity — you do not need to provide it. Store the returned `book_id`.
    - Omit `book_id` → creates a new Book.
-   - Provide `book_id` → updates that Book's metadata (title, source, tags). If the ID doesn't exist, a new Book is created and a note is included in the response.
+   - Provide `book_id` → updates that Book's metadata (title, tags). If the ID doesn't exist, a new Book is created and a note is included in the response.
 2. Call `insert_page` with the `book_id` and `content` (≤1000 words). The response returns the assigned `page_index`.
    - Split large content into meaningful, modular pages. Include some text overlap between consecutive pages to preserve semantic boundaries.
    - Every insertion triggers an immediate embedding, making the page searchable right away.
