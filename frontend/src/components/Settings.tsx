@@ -390,7 +390,7 @@ function InstallTab() {
 
   const MCP_URL = (import.meta.env.VITE_MCP_URL as string) || 'http://localhost:8081/mcp';
   const cursorConfig = btoa(JSON.stringify({ url: MCP_URL }));
-  const cursorDeeplink = `cursor://anysphere.cursor-deeplink/mcp/install?name=contextbridge&config=${cursorConfig}`;
+  const cursorDeeplink = `cursor://anysphere.cursor-deeplink/mcp/install?name=context-book&config=${cursorConfig}`;
   const claudeWebSteps = [
     'Open Claude (claude.ai) → Settings → Connectors',
     'Click "Add custom connector"',
