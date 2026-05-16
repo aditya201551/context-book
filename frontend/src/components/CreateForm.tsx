@@ -4,8 +4,8 @@ import Icon from './Icon';
 interface CreateFormProps {
   open: boolean;
   onClose: () => void;
-  onSave: (data: { title: string; tags: string[]; pages: string[]; source: string; bookId?: string }) => void;
-  initial?: { title: string; tags: string[]; pages: string[]; source: string; book_id: string } | null;
+  onSave: (data: { title: string; tags: string[]; pages: string[]; bookId?: string }) => void;
+  initial?: { title: string; tags: string[]; pages: string[]; book_id: string } | null;
 }
 
 const DRAFT_KEY = 'cb_draft';
@@ -105,7 +105,6 @@ export default function CreateForm({ open, onClose, onSave, initial }: CreateFor
       title: title.trim(),
       tags,
       pages: cleanPages.length > 0 ? cleanPages : [''],
-      source: initial?.source || 'user',
       bookId: initial?.book_id,
     });
     clearDraft();

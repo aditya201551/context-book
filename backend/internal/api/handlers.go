@@ -183,6 +183,10 @@ func (h *Handler) HandleCreateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Source == "" {
+		req.Source = "manual"
+	}
+
 	resp, err := h.ctxSvc.CreateBook(r.Context(), userID, ctxbridge.CreateBookRequest{
 		Title:  req.Title,
 		Source: req.Source,
@@ -266,6 +270,14 @@ func (h *Handler) HandleUpdateBook(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "Invalid JSON")
 		return
+	}
+
+	// If source is not provided by the web UI, preserve the existing one
+	if req.Source == "" {
+		existing, err := h.db.GetBook(r.Context(), bookID, userID)
+		if err == nil {
+			req.Source = existing.Source
+		}
 	}
 
 	resp, err := h.ctxSvc.UpsertBook(r.Context(), userID, ctxbridge.UpsertBookRequest{

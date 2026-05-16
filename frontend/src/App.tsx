@@ -333,11 +333,11 @@ function AppShell() {
 
   const [editingBook, setEditingBook] = useState<Book | null>(null);
 
-  const handleSave = useCallback(async (data: { title: string; tags: string[]; pages: string[]; source: string; bookId?: string }) => {
+  const handleSave = useCallback(async (data: { title: string; tags: string[]; pages: string[]; bookId?: string }) => {
     try {
       if (data.bookId) {
         // EDIT mode
-        await api.updateBook(data.bookId, data.title, data.source, data.tags);
+        await api.updateBook(data.bookId, data.title, data.tags);
         const currentBook = await api.getBook(data.bookId);
         const currentPages = currentBook.pages || [];
         // Update existing pages
@@ -355,7 +355,7 @@ function AppShell() {
         showToast('Context updated');
       } else {
         // CREATE mode
-        const book = await api.createBook(data.title, data.source, data.tags);
+        const book = await api.createBook(data.title, data.tags);
         for (const page of data.pages) {
           if (page.trim()) {
             await api.insertPage(book.book_id, page);
@@ -515,7 +515,6 @@ function AppShell() {
           title: editingBook.title,
           tags: editingBook.tags,
           pages: (editingBook.pages || []).map(p => p.content),
-          source: editingBook.source,
           book_id: editingBook.book_id,
         } : null}
       />

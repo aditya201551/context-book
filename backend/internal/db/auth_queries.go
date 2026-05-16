@@ -372,6 +372,20 @@ func (db *DB) ValidateTokenAndGetUser(ctx context.Context, token string) (string
 	return userID, nil
 }
 
+func (db *DB) ValidateTokenAndGetUserAndClient(ctx context.Context, token string) (userID string, clientName string, err error) {
+	query := `
+		SELECT t.user_id, COALESCE(c.name, t.client_id)
+		FROM oauth_tokens t
+		LEFT JOIN oauth_clients c ON c.client_id = t.client_id
+		WHERE t.token = $1 AND t.expires_at > now()
+	`
+	err = db.Pool.QueryRow(ctx, query, hashToken(token)).Scan(&userID, &clientName)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid or expired token")
+	}
+	return userID, clientName, nil
+}
+
 // RevokeToken removes a token by its stored hash value and owner — used by the web UI
 // dashboard where ListTokens already returned the hash.
 func (db *DB) RevokeToken(ctx context.Context, storedToken, userID string) error {

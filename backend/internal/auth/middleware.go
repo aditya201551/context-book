@@ -23,6 +23,7 @@ func hashToken(token string) string {
 type contextKey string
 
 const UserIDKey contextKey = "user_id"
+const ClientNameKey contextKey = "client_name"
 
 func isMCPSSEEndpoint(path string) bool {
 	return path == "/mcp" || path == "/mcp/" || strings.HasPrefix(path, "/mcp/")
@@ -83,7 +84,7 @@ func Middleware(database *db.DB, cfg *config.Config, next http.Handler) http.Han
 			return
 		}
 
-		userID, err := database.ValidateTokenAndGetUser(r.Context(), token)
+		userID, clientName, err := database.ValidateTokenAndGetUserAndClient(r.Context(), token)
 		if err != nil {
 			slog.Warn("token validation failed", "error", err)
 			w.Header().Set("WWW-Authenticate", wwwAuthHeader+`, error="invalid_token"`)
@@ -104,8 +105,11 @@ func Middleware(database *db.DB, cfg *config.Config, next http.Handler) http.Han
 			}
 		}(token)
 
-		// Inject user_id into request context
+		// Inject user_id and client_name into request context
 		ctx := context.WithValue(r.Context(), UserIDKey, userID)
+		if clientName != "" {
+			ctx = context.WithValue(ctx, ClientNameKey, clientName)
+		}
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -123,4 +127,13 @@ func ExtractBearer(authHeader string) string {
 		return authHeader[7:]
 	}
 	return ""
+}
+
+// GetClientName returns the OAuth client name stored in context (or empty if not set).
+func GetClientName(ctx context.Context) string {
+	val, ok := ctx.Value(ClientNameKey).(string)
+	if !ok {
+		return ""
+	}
+	return val
 }

@@ -72,6 +72,7 @@ export default function Sidebar({ active, counts, onNavigate, collapsed = false,
               <span className="nav-label">{it.label}</span>
               {it.id === 'library' && counts.total > 0 && <span className="nav-count">{counts.total}</span>}
             </>}
+            {collapsed && it.id === 'library' && counts.total > 0 && <span className="nav-count">{counts.total}</span>}
           </button>
         ))}
       </nav>

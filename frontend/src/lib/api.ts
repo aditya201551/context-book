@@ -75,16 +75,16 @@ export const api = {
     return { ...data, books: (data.books || []).map(normalizeBookSummary) };
   },
 
-  createBook: (title: string, source: string, tags: string[]): Promise<Book> =>
-    api.post('/api/books', { title, source, tags }),
+  createBook: (title: string, tags: string[]): Promise<Book> =>
+    api.post('/api/books', { title, tags }),
 
   getBook: async (id: string): Promise<Book> => {
     const data = await api.get(`/api/books/${id}`);
     return normalizeBook(data);
   },
 
-  updateBook: (id: string, title: string, source: string, tags: string[]): Promise<{ book_id: string; updated: boolean }> =>
-    api.put(`/api/books/${id}`, { title, source, tags }),
+  updateBook: (id: string, title: string, tags: string[]): Promise<{ book_id: string; updated: boolean }> =>
+    api.put(`/api/books/${id}`, { title, tags }),
 
   deleteBook: (id: string): Promise<void> => api.del(`/api/books/${id}`).then(() => undefined),
 

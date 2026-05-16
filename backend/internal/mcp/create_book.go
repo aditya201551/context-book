@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/contextbook/internal/auth"
 	ctxbridge "github.com/contextbook/internal/context"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -11,7 +12,6 @@ import (
 type CreateOrUpdateBookParams struct {
 	BookID *string  `json:"book_id,omitempty"`
 	Title  string   `json:"title"`
-	Source string   `json:"source"`
 	Tags   []string `json:"tags,omitempty"`
 }
 
@@ -21,10 +21,17 @@ func (s *Server) handleCreateOrUpdateBook(ctx context.Context, req *mcp.CallTool
 		return nil, nil, err
 	}
 
+	// Use the OAuth client name as the source (set by auth middleware from oauth_clients table).
+	// Falls back to "mcp" if no client name is available.
+	source := auth.GetClientName(ctx)
+	if source == "" {
+		source = "mcp"
+	}
+
 	resp, svcErr := s.ctxSvc.UpsertBook(ctx, userID, ctxbridge.UpsertBookRequest{
 		BookID: args.BookID,
 		Title:  args.Title,
-		Source: args.Source,
+		Source: source,
 		Tags:   args.Tags,
 	})
 	if svcErr != nil {
