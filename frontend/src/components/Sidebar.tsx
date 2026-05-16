@@ -16,6 +16,7 @@ interface SidebarProps {
 const NAV_ITEMS = [
   { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
   { id: 'library', icon: 'library', label: 'Library' },
+  { id: 'settings', icon: 'settings', label: 'Settings' },
 ];
 
 export default function Sidebar({ active, counts, onNavigate, collapsed = false, activeSource, onSourceFilter }: SidebarProps) {
