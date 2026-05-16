@@ -2436,3 +2436,126 @@ svg { display: block; }
 }
 .cluster:hover .cluster-edit-icon { opacity: 1; }
 .cluster-edit-icon:hover { background: var(--hover); color: var(--text); }
+
+/* ============ MOBILE RESPONSIVE ============ */
+@media (max-width: 768px) {
+  body { overflow: auto; }
+
+  /* App layout: sidebar becomes bottom nav */
+  .app { flex-direction: column; height: auto; min-height: 100vh; }
+  .sidebar {
+    width: 100%; height: auto; flex-direction: row;
+    border-right: none; border-top: 1px solid var(--border-soft);
+    padding: 6px 8px; gap: 2px;
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 80;
+    order: 2;
+  }
+  .sidebar .brand, .sidebar .nav-section-title, .sidebar .sources-list { display: none; }
+  .sidebar .nav { flex-direction: row; justify-content: center; flex: 1; }
+  .nav-item { flex: 1; justify-content: center; padding: 8px 4px; }
+  .nav-label { display: none; }
+  .nav-count { position: absolute; top: 2px; right: 2px; }
+  .sidebar-foot { display: none; }
+
+  /* Main area */
+  .main { order: 1; padding-bottom: 60px; min-width: 0; }
+  .content { padding: 14px 14px 80px; }
+
+  /* Topbar */
+  .topbar {
+    padding: 10px 14px; gap: 8px;
+    flex-wrap: wrap;
+  }
+  .topbar-title { font-size: 14px; }
+  .searchbar { min-width: 0; flex: 1; }
+  .topbar .btn { padding: 5px 8px; font-size: 11px; }
+
+  /* Dashboard */
+  .dashboard { max-width: 100%; }
+  .quick-actions { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stats-strip { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .stats-strip-3 { grid-template-columns: repeat(2, 1fr); }
+  .dash-grid { grid-template-columns: 1fr; gap: 10px; }
+  .dash-card { padding: 12px 14px; }
+  .page-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .page-title { font-size: 26px; }
+  .page-head-actions { margin-left: 0; width: 100%; }
+
+  /* Library cards */
+  .ctx-grid { grid-template-columns: 1fr; gap: 10px; }
+  .ctx-card { padding: 12px 14px; }
+  .ctx-title { font-size: 16px; }
+
+  /* Rows view */
+  .ctx-row {
+    grid-template-columns: auto 1fr auto;
+    gap: 8px; padding: 8px 10px;
+  }
+  .ctx-row-time, .ctx-row-tokens { display: none; }
+
+  /* Compact table */
+  .ctx-compact-head, .ctx-compact {
+    grid-template-columns: 30px 30px 1fr 100px 60px;
+    gap: 6px; padding: 6px 8px;
+  }
+  .compact-tags { display: none; }
+
+  /* Command palette */
+  .cmdk-overlay { padding-top: 8vh; align-items: flex-start; }
+  .cmdk { width: 96vw; max-height: 80vh; border-radius: 12px; }
+  .cmdk-head { padding: 10px 12px; }
+  .cmdk-search input { font-size: 14px; }
+
+  /* Drawer */
+  .drawer { width: 100vw; padding: 16px 18px 30px; }
+  .drawer-title { font-size: 24px; }
+  .drawer-meta-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+  /* Settings */
+  .settings-layout { grid-template-columns: 1fr; gap: 14px; }
+  .settings-subnav { position: static; flex-direction: row; overflow-x: auto; gap: 4px; padding: 4px; }
+  .settings-nav-item { white-space: nowrap; padding: 7px 10px; font-size: 12px; }
+  .settings-section-head { flex-direction: column; gap: 10px; }
+  .settings-endpoint-badge { width: 100%; justify-content: center; }
+
+  /* Install cards */
+  .install-grid { grid-template-columns: 1fr; }
+  .install-card { padding: 14px; }
+
+  /* Create form */
+  .form-textarea { min-height: 180px; }
+  .form-foot { flex-direction: column; gap: 10px; align-items: stretch; }
+  .form-foot-right { width: 100%; justify-content: stretch; }
+  .form-foot-right .btn { flex: 1; justify-content: center; }
+
+  /* Empty states */
+  .empty-state { padding: 40px 16px; }
+  .empty-title { font-size: 20px; }
+  .empty-sub { font-size: 12px; max-width: 100%; }
+
+  /* Tweaks panel */
+  .tweaks-panel {
+    width: calc(100vw - 36px); right: 18px; left: 18px;
+    bottom: 70px;
+  }
+
+  /* Cluster strip */
+  .cluster-strip { grid-template-columns: 1fr; gap: 8px; margin-bottom: 14px; }
+
+  /* Filter bar */
+  .filter-bar { gap: 6px; }
+  .view-switcher { display: none; }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .quick-actions { grid-template-columns: 1fr; }
+  .stats-strip { grid-template-columns: 1fr; }
+  .topbar .btn-ghost, .topbar .kbd { display: none; }
+  .ctx-compact-head, .ctx-compact {
+    grid-template-columns: 30px 1fr 80px;
+  }
+  .compact-time { display: none; }
+  .searchbar { display: none; }
+}
+
