@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -22,6 +23,18 @@ func hashToken(token string) string {
 type contextKey string
 
 const UserIDKey contextKey = "user_id"
+
+func isMCPSSEEndpoint(path string) bool {
+	return path == "/mcp" || path == "/mcp/" || strings.HasPrefix(path, "/mcp/")
+}
+
+func sendSSEAuthError(w http.ResponseWriter, status int, message string) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.WriteHeader(status)
+	fmt.Fprintf(w, "event: error\ndata: %s\n\n", message)
+}
 
 // Middleware validates OAuth 2.0 Bearer tokens and handles PRM discovery
 func Middleware(database *db.DB, cfg *config.Config, next http.Handler) http.Handler {
@@ -51,6 +64,10 @@ func Middleware(database *db.DB, cfg *config.Config, next http.Handler) http.Han
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			w.Header().Set("WWW-Authenticate", wwwAuthHeader)
+			if isMCPSSEEndpoint(r.URL.Path) {
+				sendSSEAuthError(w, http.StatusUnauthorized, "Unauthorized: Missing Authorization header")
+				return
+			}
 			http.Error(w, "Unauthorized: Missing Authorization header", http.StatusUnauthorized)
 			return
 		}
@@ -58,6 +75,10 @@ func Middleware(database *db.DB, cfg *config.Config, next http.Handler) http.Han
 		token := ExtractBearer(authHeader)
 		if token == "" {
 			w.Header().Set("WWW-Authenticate", wwwAuthHeader+`, error="invalid_request"`)
+			if isMCPSSEEndpoint(r.URL.Path) {
+				sendSSEAuthError(w, http.StatusUnauthorized, "Unauthorized: Invalid Authorization header format")
+				return
+			}
 			http.Error(w, "Unauthorized: Invalid Authorization header format", http.StatusUnauthorized)
 			return
 		}
@@ -66,6 +87,10 @@ func Middleware(database *db.DB, cfg *config.Config, next http.Handler) http.Han
 		if err != nil {
 			slog.Warn("token validation failed", "error", err)
 			w.Header().Set("WWW-Authenticate", wwwAuthHeader+`, error="invalid_token"`)
+			if isMCPSSEEndpoint(r.URL.Path) {
+				sendSSEAuthError(w, http.StatusUnauthorized, "Unauthorized: Invalid or expired token")
+				return
+			}
 			http.Error(w, "Unauthorized: Invalid or expired token", http.StatusUnauthorized)
 			return
 		}
