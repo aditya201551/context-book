@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -145,10 +146,24 @@ func isAPIRoute(path string) bool {
 		strings.HasPrefix(path, "/token") ||
 		strings.HasPrefix(path, "/register") ||
 		strings.HasPrefix(path, "/revoke") ||
-		strings.HasPrefix(path, "/authorize") ||
 		strings.HasPrefix(path, "/.well-known/") ||
 		strings.HasPrefix(path, "/debug/") ||
 		strings.HasPrefix(path, "/healthz")
+}
+
+// isBackendAuthorize checks if /authorize is being called as a backend OAuth endpoint
+// (has client_id) vs a frontend page (has key or error param)
+func isBackendAuthorize(path string, query string) bool {
+	if path != "/authorize" {
+		return false
+	}
+	q, _ := url.ParseQuery(query)
+	// If key or error is present, it's the frontend page
+	if q.Get("key") != "" || q.Get("error") != "" {
+		return false
+	}
+	// If client_id is present, it's the backend OAuth endpoint
+	return q.Get("client_id") != ""
 }
 
 func findDistPath() string {
@@ -169,11 +184,18 @@ func findDistPath() string {
 func spaHandler(distPath string, apiMux http.Handler) http.Handler {
 	fileServer := http.FileServer(http.Dir(distPath))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if isAPIRoute(r.URL.Path) {
+		path := r.URL.Path
+		// Route backend OAuth /authorize (with client_id) to API handlers,
+		// but serve frontend /authorize (with key/error) as SPA page.
+		if isBackendAuthorize(path, r.URL.RawQuery) {
 			apiMux.ServeHTTP(w, r)
 			return
 		}
-		fPath := filepath.Join(distPath, filepath.Clean("/"+r.URL.Path))
+		if isAPIRoute(path) {
+			apiMux.ServeHTTP(w, r)
+			return
+		}
+		fPath := filepath.Join(distPath, filepath.Clean("/"+path))
 		info, err := os.Stat(fPath)
 		if os.IsNotExist(err) || err != nil || info.IsDir() {
 			r.URL.Path = "/"
