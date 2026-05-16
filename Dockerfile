@@ -17,6 +17,8 @@ FROM golang:1.24-alpine AS go-builder
 WORKDIR /app
 RUN apk add --no-cache git ca-certificates
 
+ENV GOTOOLCHAIN=auto
+
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
@@ -27,6 +29,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o bin/mcp ./cmd/mcp/main
 # ─── Stage 2: Build frontend SPA ───
 FROM node:22-alpine AS fe-builder
 WORKDIR /app
+
+ARG VITE_MCP_URL
+ENV VITE_MCP_URL=${VITE_MCP_URL}
 
 COPY package.json package-lock.json ./
 COPY frontend/package.json ./frontend/
