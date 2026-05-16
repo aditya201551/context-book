@@ -1,29 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <!-- Owl favicon for ContextBook — gold on dark, matches the Greek/classical aesthetic -->
-  <rect width="64" height="64" rx="12" fill="#0c0b0a"/>
-  <!-- Owl body -->
-  <ellipse cx="32" cy="38" rx="18" ry="20" fill="#e8b765"/>
-  <!-- Owl head -->
-  <circle cx="32" cy="22" r="16" fill="#e8b765"/>
+  <!-- ContextBook Owl Face Favicon — matches the login-page logo aesthetic -->
+  <rect width="64" height="64" rx="14" fill="#141312"/>
+  <!-- Outer ring -->
+  <circle cx="32" cy="32" r="24" stroke="#e8b765" stroke-width="2" fill="none"/>
   <!-- Left ear tuft -->
-  <polygon points="18,10 14,2 22,8" fill="#e8b765"/>
+  <polygon points="20,14 16,6 24,12" fill="#e8b765"/>
   <!-- Right ear tuft -->
-  <polygon points="46,10 50,2 42,8" fill="#e8b765"/>
-  <!-- Left eye background -->
-  <circle cx="24" cy="20" r="6" fill="#0c0b0a"/>
-  <!-- Right eye background -->
-  <circle cx="40" cy="20" r="6" fill="#0c0b0a"/>
-  <!-- Left eye pupil -->
-  <circle cx="24" cy="20" r="2.5" fill="#e8b765"/>
-  <!-- Right eye pupil -->
-  <circle cx="40" cy="20" r="2.5" fill="#e8b765"/>
+  <polygon points="44,14 48,6 40,12" fill="#e8b765"/>
+  <!-- Face outline -->
+  <circle cx="32" cy="33" r="17" fill="none" stroke="#e8b765" stroke-width="2"/>
+  <!-- Left eye -->
+  <circle cx="25" cy="29" r="5" fill="none" stroke="#e8b765" stroke-width="2"/>
+  <circle cx="25" cy="29" r="2" fill="#e8b765"/>
+  <!-- Right eye -->
+  <circle cx="39" cy="29" r="5" fill="none" stroke="#e8b765" stroke-width="2"/>
+  <circle cx="39" cy="29" r="2" fill="#e8b765"/>
   <!-- Beak -->
-  <polygon points="32,24 28,30 36,30" fill="#0c0b0a"/>
-  <!-- Wing left -->
-  <path d="M18 36 Q12 44 18 52" stroke="#0c0b0a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-  <!-- Wing right -->
-  <path d="M46 36 Q52 44 46 52" stroke="#0c0b0a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-  <!-- Belly detail -->
-  <path d="M26 44 Q32 48 38 44" stroke="#0c0b0a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  <path d="M28 50 Q32 53 36 50" stroke="#0c0b0a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <polygon points="32,35 28,42 36,42" fill="#e8b765"/>
+  <!-- Chest feathers / detail -->
+  <path d="M26 46 Q32 50 38 46" stroke="#e8b765" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M28 50 Q32 53 36 50" stroke="#e8b765" stroke-width="1.5" fill="none" stroke-linecap="round"/>
 </svg>
