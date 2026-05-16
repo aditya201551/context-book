@@ -38,7 +38,7 @@ func Load() (*Config, error) {
 
 	cfg := &Config{
 		Port:               getEnvOrDefault("PORT", "8080"),
-		MCPPort:            getEnvOrDefault("MCP_PORT", "8081"),
+		MCPPort:            getEnvOrDefault("MCP_PORT", "8080"),
 		Env:                getEnvOrDefault("ENV", "development"),
 		DatabaseURL:        getEnv("DATABASE_URL"),
 		VoyageAPIKey:       getEnv("VOYAGE_API_KEY"),

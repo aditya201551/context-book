@@ -24,6 +24,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o bin/mcp ./cmd/mcp/main
 FROM gcr.io/distroless/static-debian12
 WORKDIR /app
 COPY --from=go-builder /app/bin/mcp /app/mcp
-ENV MCP_PORT=8081
-EXPOSE 8081
+ENV MCP_PORT=8080
+EXPOSE 8080
 ENTRYPOINT ["/app/mcp"]
