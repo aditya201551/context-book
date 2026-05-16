@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"runtime"
 
@@ -13,7 +14,6 @@ import (
 )
 
 func RunMigrations(databaseURL string) error {
-	// First open native sql.DB for the migration driver
 	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
 		return fmt.Errorf("failed to open db for migrations: %w", err)
@@ -24,10 +24,14 @@ func RunMigrations(databaseURL string) error {
 		return fmt.Errorf("failed to ping db for migrations: %w", err)
 	}
 
-	// Wait, we need to locate the migrations folder since tests and server might run from different dirs
-	_, b, _, _ := runtime.Caller(0)
-	basepath := filepath.Dir(b)
-	p := filepath.Join(basepath, "migrations")
+	var p string
+	if envPath := os.Getenv("MIGRATIONS_PATH"); envPath != "" {
+		p = envPath
+	} else {
+		_, b, _, _ := runtime.Caller(0)
+		basepath := filepath.Dir(b)
+		p = filepath.Join(basepath, "migrations")
+	}
 	if runtime.GOOS == "windows" {
 		p = filepath.ToSlash(p)
 	}

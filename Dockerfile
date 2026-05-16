@@ -52,8 +52,10 @@ ENTRYPOINT ["/app/mcp"]
 FROM gcr.io/distroless/static-debian12 AS api
 WORKDIR /app
 COPY --from=go-builder /app/bin/api /app/api
+COPY --from=go-builder /app/internal/db/migrations /app/internal/db/migrations
 COPY --from=fe-builder /app/frontend/dist /app/frontend/dist
 ENV PORT=8080
 ENV FRONTEND_DIST=/app/frontend/dist
+ENV MIGRATIONS_PATH=/app/internal/db/migrations
 EXPOSE 8080
 ENTRYPOINT ["/app/api"]
