@@ -43,7 +43,6 @@ function ClientsTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<any>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
 
@@ -82,7 +81,6 @@ function ClientsTab() {
       showToast(err?.message || 'Failed to disconnect');
     } finally {
       setDisconnecting(null);
-      setConfirm(null);
     }
   };
 
@@ -138,7 +136,7 @@ function ClientsTab() {
                     <button
                       className="btn btn-sm btn-ghost-danger"
                       disabled={disconnecting === c.client_id}
-                      onClick={(e) => { e.stopPropagation(); setConfirm({ id: c.client_id, name: c.name || c.client_id }); }}
+                      onClick={(e) => { e.stopPropagation(); handleDisconnect(c.client_id, c.name || c.client_id); }}
                     >
                       {disconnecting === c.client_id ? '…' : <Icon name="trash" size={12} />}
                     </button>
@@ -172,15 +170,6 @@ function ClientsTab() {
         </div>
       )}
 
-      {confirm && (
-        <ConfirmModal
-          title="Disconnect client"
-          body={`"${confirm.name}" will lose access immediately. They must re-authorize via OAuth to reconnect.`}
-          danger
-          onConfirm={() => handleDisconnect(confirm.id, confirm.name)}
-          onCancel={() => setConfirm(null)}
-        />
-      )}
       {toast && <div className="settings-toast"><Icon name="check" size={12} /> {toast}</div>}
     </div>
   );
