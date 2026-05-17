@@ -11,9 +11,9 @@ import (
 )
 
 type UpdatePageParams struct {
-	BookID     string `json:"book_id"`
-	PageIndex  int    `json:"page_index"`
-	Content    string `json:"content"`
+	BookID    string `json:"book_id" jsonschema:"UUID of the book containing the page to update."`
+	PageIndex int    `json:"page_index" jsonschema:"Zero-based index of the page to replace."`
+	Content   string `json:"content" jsonschema:"New page text content. Max 1000 words."`
 }
 
 func (s *Server) handleUpdatePage(ctx context.Context, req *mcp.CallToolRequest, args UpdatePageParams) (*mcp.CallToolResult, any, error) {

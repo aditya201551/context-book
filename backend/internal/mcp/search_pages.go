@@ -9,9 +9,9 @@ import (
 )
 
 type SearchPagesParams struct {
-	Query string   `json:"query"`
-	Tags  []string `json:"tags,omitempty"`
-	Limit *int     `json:"limit"`
+	Query string   `json:"query" jsonschema:"Natural language search query (e.g. 'how to handle retries in Go')."`
+	Tags  []string `json:"tags,omitempty" jsonschema:"Optional list of tags to filter results by."`
+	Limit *int     `json:"limit,omitempty" jsonschema:"Maximum number of results to return. Defaults to 5, max 20."`
 }
 
 func (s *Server) handleSearchPages(ctx context.Context, req *mcp.CallToolRequest, args SearchPagesParams) (*mcp.CallToolResult, any, error) {

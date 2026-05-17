@@ -9,8 +9,8 @@ import (
 )
 
 type ListBooksParams struct {
-	Limit  *int `json:"limit"`
-	Offset *int `json:"offset"`
+	Limit  *int `json:"limit,omitempty" jsonschema:"Maximum number of books to return. Defaults to 20."`
+	Offset *int `json:"offset,omitempty" jsonschema:"Number of books to skip for pagination. Defaults to 0."`
 }
 
 func (s *Server) handleListBooks(ctx context.Context, req *mcp.CallToolRequest, args ListBooksParams) (*mcp.CallToolResult, any, error) {

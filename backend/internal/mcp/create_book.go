@@ -10,9 +10,9 @@ import (
 )
 
 type CreateOrUpdateBookParams struct {
-	BookID *string  `json:"book_id,omitempty"`
-	Title  string   `json:"title"`
-	Tags   []string `json:"tags,omitempty"`
+	BookID *string  `json:"book_id,omitempty" jsonschema:"UUID of an existing book to update. Omit to create a new book."`
+	Title  string   `json:"title" jsonschema:"Short descriptive title of the book. Required."`
+	Tags   []string `json:"tags,omitempty" jsonschema:"Optional list of tags to categorize the book (e.g. ['go', 'backend'])."`
 }
 
 func (s *Server) handleCreateOrUpdateBook(ctx context.Context, req *mcp.CallToolRequest, args CreateOrUpdateBookParams) (*mcp.CallToolResult, any, error) {

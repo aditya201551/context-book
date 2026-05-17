@@ -11,8 +11,8 @@ import (
 )
 
 type InsertPageParams struct {
-	BookID  string `json:"book_id"`
-	Content string `json:"content"`
+	BookID  string `json:"book_id" jsonschema:"UUID of the book to insert the page into."`
+	Content string `json:"content" jsonschema:"Page text content. Max 1000 words; split large content into meaningful chunks."`
 }
 
 func (s *Server) handleInsertPage(ctx context.Context, req *mcp.CallToolRequest, args InsertPageParams) (*mcp.CallToolResult, any, error) {

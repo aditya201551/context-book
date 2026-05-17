@@ -9,7 +9,7 @@ import (
 )
 
 type GetBookParams struct {
-	BookID string `json:"book_id"`
+	BookID string `json:"book_id" jsonschema:"UUID of the book to retrieve."`
 }
 
 func (s *Server) handleGetBook(ctx context.Context, req *mcp.CallToolRequest, args GetBookParams) (*mcp.CallToolResult, any, error) {

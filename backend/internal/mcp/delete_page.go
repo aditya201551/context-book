@@ -8,8 +8,8 @@ import (
 )
 
 type DeletePageParams struct {
-	BookID    string `json:"book_id"`
-	PageIndex int    `json:"page_index"`
+	BookID    string `json:"book_id" jsonschema:"UUID of the book containing the page to delete."`
+	PageIndex int    `json:"page_index" jsonschema:"Zero-based index of the page to remove."`
 }
 
 func (s *Server) handleDeletePage(ctx context.Context, req *mcp.CallToolRequest, args DeletePageParams) (*mcp.CallToolResult, any, error) {
