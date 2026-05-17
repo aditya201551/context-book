@@ -202,9 +202,12 @@ func (db *DB) GetPagesByBookID(ctx context.Context, bookID, userID string) ([]Pa
 // UpdateBook replaces the metadata of an existing book. Returns false if no
 // row was matched (book doesn't exist or belongs to a different user).
 func (db *DB) UpdateBook(ctx context.Context, bookID, userID, title, source string, tags []string) (bool, error) {
+	// An empty source means "preserve the existing value" — the web UI omits
+	// source on update, while MCP clients always send one. Handled here so the
+	// update handler needs no extra read.
 	query := `
 		UPDATE context_books
-		SET title = $3, source = $4, tags = $5, updated_at = now()
+		SET title = $3, source = COALESCE(NULLIF($4, ''), source), tags = $5, updated_at = now()
 		WHERE id = $1 AND user_id = $2
 	`
 	result, err := db.Pool.Exec(ctx, query, bookID, userID, title, source, tags)

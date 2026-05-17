@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import type { BookSummary, Book, Tweaks } from './types';
-import { api } from './lib/api';
+import { api, ApiError } from './lib/api';
 import { ACCENTS, THEMES, TWEAK_DEFAULTS } from './lib/utils';
 import Sidebar from './components/Sidebar';
 import Icon from './components/Icon';
@@ -35,7 +35,7 @@ const AUTHORIZE = () => {
         .then(() => api.get('/api/oauth/authorize-info?key=' + encodeURIComponent(key)))
         .then(setClientInfo)
         .catch((err: any) => {
-          if (err.message === 'Unauthorized' || err.message === 'Request Failed (401)') {
+          if (err instanceof ApiError && err.status === 401) {
             window.location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search);
             return;
           }
@@ -231,10 +231,6 @@ function AppShell() {
     else { setRoute('dashboard'); setView('dashboard'); }
   }, [location.pathname]);
 
-  // Persist route and view
-  useEffect(() => { localStorage.setItem('cb_route', route); }, [route]);
-  useEffect(() => { localStorage.setItem('cb_view', view); }, [view]);
-
   const showToast = useCallback((msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2400);
@@ -362,12 +358,10 @@ function AppShell() {
         }
         showToast('Context saved · embedded in 124ms');
       }
-      const result = await api.listBooks({ limit: 1000 });
-      setBooks(result.books);
-      setTotal(result.total);
+      await refreshBooks();
       setEditingBook(null);
     } catch (err: any) { showToast(err.message || 'Failed to save'); }
-  }, [showToast]);
+  }, [showToast, refreshBooks]);
 
   const handleDelete = useCallback(async (book: Book) => {
     try {

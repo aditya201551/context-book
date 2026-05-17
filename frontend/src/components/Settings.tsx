@@ -9,18 +9,8 @@ const SETTINGS_NAV = [
   { id: 'general', label: 'General', icon: 'settings' },
   { id: 'install', label: 'Installation', icon: 'import' },
   { id: 'clients', label: 'Connected clients', icon: 'link' },
+  { id: 'tokens', label: 'Authorized apps', icon: 'tag' },
 ];
-
-const SCOPE_COLORS: Record<string, string> = { read: '#6ba4d6', write: '#d6a46b', delete: '#d6706b' };
-
-function ScopePill({ scope }: { scope: string }) {
-  const c = SCOPE_COLORS[scope] || '#999';
-  return (
-    <span className="scope-pill" style={{ background: c + '22', color: c, borderColor: c + '55' }}>
-      {scope}
-    </span>
-  );
-}
 
 function ConfirmModal({ title, body, danger, onConfirm, onCancel }: { title: string; body: string; danger?: boolean; onConfirm: () => void; onCancel: () => void }) {
   return (
@@ -175,108 +165,131 @@ function ClientsTab() {
   );
 }
 
-// -------- Tokens tab (as Authorized apps) --------
+// -------- Authorized apps (real OAuth tokens) tab --------
+function tokenSourceKey(clientID: string): string {
+  const hay = (clientID || '').toLowerCase();
+  if (hay.includes('claude')) return 'claude';
+  if (hay.includes('cursor')) return 'cursor';
+  return 'manual';
+}
+
 function TokensTab() {
-  const [apps, setApps] = useState<any[]>([
-    { id: 'o1', name: 'Zapier', icon: 'Z', color: '#FF4A00', scopes: ['read'], authorizedAt: '2024-11-15T09:00:00Z', lastUsed: '2025-01-15T08:00:00Z', status: 'active', desc: 'Automation workflows' },
-    { id: 'o2', name: 'Notion Integration', icon: 'N', color: '#e0e0e2', scopes: ['read', 'write'], authorizedAt: '2024-12-01T14:00:00Z', lastUsed: '2025-01-14T20:00:00Z', status: 'active', desc: 'Sync contexts to Notion pages' },
-    { id: 'o3', name: 'Linear', icon: 'L', color: '#5E6AD2', scopes: ['read'], authorizedAt: '2025-01-05T10:00:00Z', lastUsed: '2025-01-13T12:00:00Z', status: 'active', desc: 'Attach contexts to issues' },
-    { id: 'o4', name: 'Slack App', icon: 'S', color: '#4A154B', scopes: ['read', 'write', 'delete'], authorizedAt: '2024-10-20T08:00:00Z', lastUsed: '2024-12-28T17:00:00Z', status: 'revoked', desc: 'Push contexts via slash commands' },
-  ]);
-  const [confirm, setConfirm] = useState<any>(null);
+  const [tokens, setTokens] = useState<TokenInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{ hash: string; label: string } | null>(null);
+  const [revoking, setRevoking] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
-  const revoke = (id: string) => { setApps(as => as.map(a => a.id === id ? { ...a, status: 'revoked' } : a)); setConfirm(null); showToast('Access revoked'); };
-  const remove = (id: string) => { setApps(as => as.filter(a => a.id !== id)); setConfirm(null); showToast('App removed'); };
-  const reauthorize = (id: string) => { setApps(as => as.map(a => a.id === id ? { ...a, status: 'active', lastUsed: new Date().toISOString() } : a)); showToast('App re-authorized'); };
 
-  const active = apps.filter(a => a.status === 'active');
-  const revoked = apps.filter(a => a.status === 'revoked');
+  const load = () => {
+    setLoading(true);
+    api.tokens()
+      .then((data: any) => { setTokens(data.tokens || []); setError(null); })
+      .catch((err: any) => setError(err?.message || 'Failed to load authorized apps'))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleRevoke = async (hash: string, label: string) => {
+    setRevoking(hash);
+    try {
+      await api.revokeToken(hash);
+      setTokens(prev => prev.filter(t => t.token_hash !== hash));
+      setConfirm(null);
+      showToast(`Access revoked for ${label}`);
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to revoke');
+    } finally {
+      setRevoking(null);
+    }
+  };
+
+  const now = Date.now();
+  const active = tokens.filter(t => !t.expires_at || new Date(t.expires_at).getTime() > now);
+  const expired = tokens.filter(t => t.expires_at && new Date(t.expires_at).getTime() <= now);
+
+  const renderRow = (t: TokenInfo, isExpired: boolean) => {
+    const key = tokenSourceKey(t.client_id);
+    const label = key === 'manual' ? t.client_id : getSource(key).label;
+    return (
+      <div key={t.token_hash} className={`oauth-row ${isExpired ? 'oauth-row-revoked' : ''}`}>
+        <div className="oauth-app-icon" style={{ background: 'var(--raised)', color: 'var(--text-dim)', borderColor: 'var(--border-soft)' }}>
+          {getSource(key).glyph}
+        </div>
+        <div className="oauth-main">
+          <div className="oauth-name" style={isExpired ? { color: 'var(--text-dim)' } : undefined}>{label}</div>
+          <div className="oauth-desc mono">{t.token_preview}</div>
+          <div className="oauth-meta mono">
+            {isExpired
+              ? <span style={{ color: '#d6706b' }}>● expired</span>
+              : <span style={{ color: '#7dd88f' }}>● active</span>}
+            <span>·</span>
+            <span>authorized {new Date(t.created_at).toLocaleDateString()}</span>
+            <span>·</span>
+            <span>last used {t.last_used_at ? timeAgo(t.last_used_at) : '—'}</span>
+            <span>·</span>
+            <span>expires {t.expires_at ? new Date(t.expires_at).toLocaleDateString() : '—'}</span>
+          </div>
+        </div>
+        <div className="oauth-actions">
+          <button
+            className="btn btn-sm btn-ghost-danger"
+            disabled={revoking === t.token_hash}
+            onClick={() => setConfirm({ hash: t.token_hash, label })}
+          >
+            {revoking === t.token_hash ? '…' : isExpired ? <Icon name="trash" size={12} /> : 'Revoke access'}
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="settings-tab-content">
       <div className="settings-section-head">
         <div>
           <h2 className="settings-section-title">Authorized apps</h2>
-          <p className="settings-section-sub">Third-party apps that have been granted access to your context library via OAuth. Revoking removes their access immediately — they must re-authorize to reconnect.</p>
+          <p className="settings-section-sub">Apps you granted access via the OAuth flow. Each holds a Bearer token scoped to your library. Revoking takes effect immediately — the app must re-authorize to reconnect.</p>
         </div>
       </div>
 
       <div className="oauth-info-bar">
         <Icon name="sparkle" size={13} />
-        <span>Access is granted through the OAuth 2.0 flow. Apps request scopes during authorization; you approve them. No tokens are issued manually.</span>
+        <span>Tokens are issued through the OAuth 2.0 authorization flow and stored hashed — only a short preview is shown here.</span>
       </div>
 
-      {active.length > 0 && (
+      {loading && <div className="empty-hint mono">Loading authorized apps…</div>}
+      {error && <div className="empty-hint mono" style={{ color: '#d6706b' }}>{error}</div>}
+
+      {!loading && !error && (
         <>
-          <div className="oauth-group-label">Active</div>
-          <div className="oauth-list">
-            {active.map(a => (
-              <div key={a.id} className="oauth-row">
-                <div className="oauth-app-icon" style={{ background: a.color + '22', color: a.color, borderColor: a.color + '44' }}>{a.icon}</div>
-                <div className="oauth-main">
-                  <div className="oauth-name">{a.name}</div>
-                  <div className="oauth-desc">{a.desc}</div>
-                  <div className="oauth-meta mono">
-                    <span>authorized {new Date(a.authorizedAt).toLocaleDateString()}</span>
-                    <span>·</span>
-                    <span>last used {timeAgo(a.lastUsed)}</span>
-                  </div>
-                  <div className="token-scopes-row" style={{ marginTop: 8 }}>
-                    {a.scopes.map((s: string) => <ScopePill key={s} scope={s} />)}
-                  </div>
-                </div>
-                <div className="oauth-actions">
-                  <button className="btn btn-sm btn-ghost-danger" onClick={() => setConfirm({ id: a.id, name: a.name, type: 'revoke' })}>
-                    Revoke access
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+          {active.length > 0 && (
+            <>
+              <div className="oauth-group-label">Active</div>
+              <div className="oauth-list">{active.map(t => renderRow(t, false))}</div>
+            </>
+          )}
+          {expired.length > 0 && (
+            <>
+              <div className="oauth-group-label" style={{ marginTop: 20 }}>Expired</div>
+              <div className="oauth-list">{expired.map(t => renderRow(t, true))}</div>
+            </>
+          )}
+          {tokens.length === 0 && (
+            <div className="empty-hint mono">No apps authorized yet. Connect an MCP client and complete the OAuth flow.</div>
+          )}
         </>
       )}
 
-      {revoked.length > 0 && (
-        <>
-          <div className="oauth-group-label" style={{ marginTop: 20 }}>Revoked</div>
-          <div className="oauth-list">
-            {revoked.map(a => (
-              <div key={a.id} className="oauth-row oauth-row-revoked">
-                <div className="oauth-app-icon" style={{ background: 'var(--raised)', color: 'var(--text-muted)', borderColor: 'var(--border-soft)' }}>{a.icon}</div>
-                <div className="oauth-main">
-                  <div className="oauth-name" style={{ color: 'var(--text-dim)' }}>{a.name}</div>
-                  <div className="oauth-desc">{a.desc}</div>
-                  <div className="oauth-meta mono">
-                    <span style={{ color: '#d6706b' }}>● revoked</span>
-                    <span>·</span>
-                    <span>was authorized {new Date(a.authorizedAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
-                <div className="oauth-actions">
-                  <button className="btn btn-sm btn-ghost" onClick={() => reauthorize(a.id)}>Re-authorize</button>
-                  <button className="btn btn-sm btn-ghost-danger" onClick={() => setConfirm({ id: a.id, name: a.name, type: 'remove' })}>
-                    <Icon name="trash" size={12} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {apps.length === 0 && <div className="empty-hint mono">No apps authorized yet. Apps connect via the OAuth flow.</div>}
-
-      {confirm?.type === 'revoke' && (
+      {confirm && (
         <ConfirmModal title="Revoke access"
-          body={`"${confirm.name}" will lose access immediately. They must re-authorize via OAuth to reconnect.`}
-          danger onConfirm={() => revoke(confirm.id)} onCancel={() => setConfirm(null)} />
-      )}
-      {confirm?.type === 'remove' && (
-        <ConfirmModal title="Remove app"
-          body={`Permanently remove "${confirm.name}" from your authorized apps?`}
-          danger onConfirm={() => remove(confirm.id)} onCancel={() => setConfirm(null)} />
+          body={`"${confirm.label}" will lose access immediately. The app must re-authorize via OAuth to reconnect.`}
+          danger
+          onConfirm={() => handleRevoke(confirm.hash, confirm.label)}
+          onCancel={() => setConfirm(null)} />
       )}
       {toast && <div className="settings-toast"><Icon name="check" size={12} /> {toast}</div>}
     </div>
@@ -529,6 +542,7 @@ export default function Settings() {
           {tab === 'general' && <GeneralTab />}
           {tab === 'install' && <InstallTab />}
           {tab === 'clients' && <ClientsTab />}
+          {tab === 'tokens' && <TokensTab />}
         </div>
       </div>
     </div>

@@ -34,23 +34,7 @@ func writeError(w http.ResponseWriter, status int, message string) {
 }
 
 // GET /api/me
-func (h *Handler) HandleMe(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleMe(w http.ResponseWriter, r *http.Request, userID string) {
 	user, err := h.db.GetUserByID(r.Context(), userID)
 	if err != nil {
 		slog.Error("Failed to get user", "error", err)
@@ -67,23 +51,7 @@ func (h *Handler) HandleMe(w http.ResponseWriter, r *http.Request) {
 }
 
 // PATCH /api/me
-func (h *Handler) HandleUpdateMe(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodPatch {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleUpdateMe(w http.ResponseWriter, r *http.Request, userID string) {
 	var body struct {
 		DisplayName string `json:"display_name"`
 	}
@@ -98,27 +66,11 @@ func (h *Handler) HandleUpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{"updated": "true"})
+	writeJSON(w, http.StatusOK, map[string]bool{"updated": true})
 }
 
 // GET /api/books
-func (h *Handler) HandleListBooks(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleListBooks(w http.ResponseWriter, r *http.Request, userID string) {
 	limit := 20
 	if v := r.URL.Query().Get("limit"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
@@ -156,23 +108,7 @@ func (h *Handler) HandleListBooks(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST /api/books
-func (h *Handler) HandleCreateBook(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleCreateBook(w http.ResponseWriter, r *http.Request, userID string) {
 	var req struct {
 		Title  string   `json:"title"`
 		Source string   `json:"source"`
@@ -205,23 +141,7 @@ func (h *Handler) HandleCreateBook(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET /api/books/{id}
-func (h *Handler) HandleGetBook(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleGetBook(w http.ResponseWriter, r *http.Request, userID string) {
 	bookID := r.PathValue("id")
 	if bookID == "" {
 		writeError(w, http.StatusBadRequest, "book_id is required")
@@ -239,23 +159,7 @@ func (h *Handler) HandleGetBook(w http.ResponseWriter, r *http.Request) {
 }
 
 // PUT /api/books/{id}
-func (h *Handler) HandleUpdateBook(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodPut {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleUpdateBook(w http.ResponseWriter, r *http.Request, userID string) {
 	bookID := r.PathValue("id")
 	if bookID == "" {
 		writeError(w, http.StatusBadRequest, "book_id is required")
@@ -272,14 +176,8 @@ func (h *Handler) HandleUpdateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// If source is not provided by the web UI, preserve the existing one
-	if req.Source == "" {
-		existing, err := h.db.GetBook(r.Context(), bookID, userID)
-		if err == nil {
-			req.Source = existing.Source
-		}
-	}
-
+	// Source is preserved at the SQL layer when empty (web UI omits it),
+	// so no extra read is needed here.
 	resp, err := h.ctxSvc.UpsertBook(r.Context(), userID, ctxbridge.UpsertBookRequest{
 		BookID: &bookID,
 		Title:  req.Title,
@@ -299,23 +197,7 @@ func (h *Handler) HandleUpdateBook(w http.ResponseWriter, r *http.Request) {
 }
 
 // DELETE /api/books/{id}
-func (h *Handler) HandleDeleteBook(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodDelete {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleDeleteBook(w http.ResponseWriter, r *http.Request, userID string) {
 	bookID := r.PathValue("id")
 	if bookID == "" {
 		writeError(w, http.StatusBadRequest, "book_id is required")
@@ -332,23 +214,7 @@ func (h *Handler) HandleDeleteBook(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST /api/books/{id}/pages
-func (h *Handler) HandleInsertPage(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleInsertPage(w http.ResponseWriter, r *http.Request, userID string) {
 	bookID := r.PathValue("id")
 	if bookID == "" {
 		writeError(w, http.StatusBadRequest, "book_id is required")
@@ -381,23 +247,7 @@ func (h *Handler) HandleInsertPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // PUT /api/books/{id}/pages/{index}
-func (h *Handler) HandleUpdatePage(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodPut {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleUpdatePage(w http.ResponseWriter, r *http.Request, userID string) {
 	bookID := r.PathValue("id")
 	if bookID == "" {
 		writeError(w, http.StatusBadRequest, "book_id is required")
@@ -441,23 +291,7 @@ func (h *Handler) HandleUpdatePage(w http.ResponseWriter, r *http.Request) {
 }
 
 // DELETE /api/books/{id}/pages/{index}
-func (h *Handler) HandleDeletePage(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodDelete {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleDeletePage(w http.ResponseWriter, r *http.Request, userID string) {
 	bookID := r.PathValue("id")
 	if bookID == "" {
 		writeError(w, http.StatusBadRequest, "book_id is required")
@@ -484,23 +318,7 @@ func (h *Handler) HandleDeletePage(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET /api/clients
-func (h *Handler) HandleListClients(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleListClients(w http.ResponseWriter, r *http.Request, userID string) {
 	clients, err := h.db.ListClients(r.Context(), userID)
 	if err != nil {
 		slog.Error("Failed to list clients", "error", err)
@@ -514,23 +332,7 @@ func (h *Handler) HandleListClients(w http.ResponseWriter, r *http.Request) {
 }
 
 // DELETE /api/clients/{id}
-func (h *Handler) HandleDeleteClient(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodDelete {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleDeleteClient(w http.ResponseWriter, r *http.Request, userID string) {
 	clientID := r.PathValue("id")
 	if clientID == "" {
 		writeError(w, http.StatusBadRequest, "client_id is required")
@@ -547,23 +349,7 @@ func (h *Handler) HandleDeleteClient(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST /api/search
-func (h *Handler) HandleSearch(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleSearch(w http.ResponseWriter, r *http.Request, userID string) {
 	var req struct {
 		Query string   `json:"query"`
 		Tags  []string `json:"tags"`
@@ -595,23 +381,7 @@ func (h *Handler) HandleSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET /api/search/suggest
-func (h *Handler) HandleSearchSuggestions(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleSearchSuggestions(w http.ResponseWriter, r *http.Request, userID string) {
 	q := r.URL.Query().Get("q")
 	if q == "" {
 		writeJSON(w, http.StatusOK, map[string]interface{}{"suggestions": []any{}})
@@ -631,23 +401,7 @@ func (h *Handler) HandleSearchSuggestions(w http.ResponseWriter, r *http.Request
 }
 
 // GET /api/books/{id}/related
-func (h *Handler) HandleGetRelatedBooks(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleGetRelatedBooks(w http.ResponseWriter, r *http.Request, userID string) {
 	id := r.PathValue("id")
 	if id == "" {
 		writeError(w, http.StatusBadRequest, "id is required")
@@ -666,23 +420,8 @@ func (h *Handler) HandleGetRelatedBooks(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-func (h *Handler) HandleListClusters(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+// GET /api/clusters
+func (h *Handler) HandleListClusters(w http.ResponseWriter, r *http.Request, userID string) {
 	clusters, err := h.db.ListUserClusters(r.Context(), userID)
 	if err != nil {
 		slog.Error("Failed to list clusters", "error", err)
@@ -696,23 +435,7 @@ func (h *Handler) HandleListClusters(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST /api/clusters
-func (h *Handler) HandleCreateCluster(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleCreateCluster(w http.ResponseWriter, r *http.Request, userID string) {
 	var req struct {
 		Name  string   `json:"name"`
 		Tags  []string `json:"tags"`
@@ -734,23 +457,7 @@ func (h *Handler) HandleCreateCluster(w http.ResponseWriter, r *http.Request) {
 }
 
 // PUT /api/clusters/{id}
-func (h *Handler) HandleUpdateCluster(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodPut {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleUpdateCluster(w http.ResponseWriter, r *http.Request, userID string) {
 	id := r.PathValue("id")
 	if id == "" {
 		writeError(w, http.StatusBadRequest, "id is required")
@@ -773,27 +480,11 @@ func (h *Handler) HandleUpdateCluster(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{"updated": "true"})
+	writeJSON(w, http.StatusOK, map[string]bool{"updated": true})
 }
 
 // DELETE /api/clusters/{id}
-func (h *Handler) HandleDeleteCluster(w http.ResponseWriter, r *http.Request) {
-	h.authH.SetCORSHeaders(w, r)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodDelete {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID := h.authH.UserFromSession(r)
-	if userID == "" {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
+func (h *Handler) HandleDeleteCluster(w http.ResponseWriter, r *http.Request, userID string) {
 	id := r.PathValue("id")
 	if id == "" {
 		writeError(w, http.StatusBadRequest, "id is required")

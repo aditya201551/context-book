@@ -2,6 +2,15 @@ import type { ListBooksResponse, SearchResponse, Book, BookSummary, RankedPage }
 
 const BASE = (import.meta.env.VITE_API_URL as string) ?? '';
 
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 function normalizeBook(b: any): Book {
   return { ...b, tags: b.tags || [], pages: b.pages || [] };
 }
@@ -14,18 +23,28 @@ async function handleResponse(resp: Response): Promise<any> {
   if (!resp.ok) {
     let data: any = {};
     try { data = await resp.json(); } catch {}
-    throw new Error(data.error || `Request failed (${resp.status})`);
+    throw new ApiError(data.error || `Request failed (${resp.status})`, resp.status);
   }
   return resp.json().catch(() => ({}));
 }
 
+// Dedupe concurrent identical GETs: while a request for `url` is in flight,
+// callers share the same promise. Cleared on settle, so data is never stale.
+const inFlightGets = new Map<string, Promise<any>>();
+
 export const api = {
-  async get(url: string) {
-    const resp = await fetch(BASE + url, {
-      credentials: 'include',
-      headers: { Accept: 'application/json' },
-    });
-    return handleResponse(resp);
+  get(url: string): Promise<any> {
+    const existing = inFlightGets.get(url);
+    if (existing) return existing;
+    const p = (async () => {
+      const resp = await fetch(BASE + url, {
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+      });
+      return handleResponse(resp);
+    })().finally(() => inFlightGets.delete(url));
+    inFlightGets.set(url, p);
+    return p;
   },
   async post(url: string, body: unknown) {
     const resp = await fetch(BASE + url, {
@@ -100,10 +119,6 @@ export const api = {
   search: async (query: string, tags?: string[], limit?: number): Promise<SearchResponse> => {
     const data = await api.post('/api/search', { query, tags: tags || [], limit: limit || 10 });
     return { results: (data.results || []).map((r: any) => ({ ...r, tags: r.tags || [] })) };
-  },
-  searchSuggest: async (q: string, limit = 8) => {
-    const data = await api.get(`/api/search/suggest?q=${encodeURIComponent(q)}&limit=${limit}`);
-    return data.suggestions || [];
   },
 
   tokens: () => api.get('/api/tokens'),

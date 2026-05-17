@@ -59,59 +59,6 @@ export function ctxTokens(book: { pages?: { content: string; token_count?: numbe
   }, 0);
 }
 
-export function ctxPreview(book: { pages?: { content: string }[] }): string {
-  if (!book.pages || !book.pages.length) return '';
-  const text = book.pages[0].content;
-  return text.replace(/^Module \d+:\s*/i, '').slice(0, 200);
-}
-
-export function ctxChunkCount(book: { pages?: unknown[] }): number {
-  return book.pages ? book.pages.length : 0;
-}
-
-export function ctxId(book: { book_id?: string; id?: string }): string {
-  return book.book_id || book.id || '';
-}
-
 export function ctxUpdated(book: { updated_at?: string; created_at?: string }): string {
   return book.updated_at || book.created_at || new Date().toISOString();
-}
-
-export function ctxCreated(book: { created_at?: string }): string {
-  return book.created_at || new Date().toISOString();
-}
-
-export function semScore(query: string, ctx: { title: string; tags: string[]; pages?: { content: string }[] }): number {
-  if (!query) return 0;
-  const q = query.toLowerCase();
-  let score = 0;
-  const title = ctx.title.toLowerCase();
-  const preview = (ctx.pages?.[0]?.content || '').toLowerCase();
-  const tags = ctx.tags.join(' ').toLowerCase();
-
-  const words = q.split(/\s+/).filter(w => w.length > 1);
-  for (const w of words) {
-    if (title.includes(w)) score += 0.35;
-    if (tags.includes(w)) score += 0.22;
-    if (preview.includes(w)) score += 0.15;
-  }
-
-  const neighbors: Record<string, string[]> = {
-    consensus: ['distributed-systems', 'raft', 'paxos', 'leader'],
-    async: ['webhooks', 'pub/sub', 'queue', 'embeddings'],
-    search: ['fts', 'pgvector', 'embedding', 'vector'],
-    slow: ['performance', 'debugging', 'timeout', '502'],
-    database: ['postgres', 'pgvector', 'index'],
-    ai: ['ml', 'embedding', 'claude', 'papers'],
-    team: ['meeting', 'onboarding', 'sarah', 'roadmap'],
-    memory: ['rust', 'lifetimes', 'borrow'],
-  };
-  for (const [key, hits] of Object.entries(neighbors)) {
-    if (q.includes(key)) {
-      for (const hit of hits) {
-        if (title.includes(hit) || preview.includes(hit) || tags.includes(hit)) score += 0.18;
-      }
-    }
-  }
-  return Math.min(1, score);
 }
