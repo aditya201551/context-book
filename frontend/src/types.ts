@@ -62,6 +62,7 @@ export interface ClientInfo {
   name: string;
   last_used_at: string;
   created_at: string;
+  active: boolean;
 }
 
 export interface ListBooksResponse {

@@ -18,6 +18,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/search/suggest", h.protected(http.MethodGet, h.HandleSearchSuggestions))
 	mux.HandleFunc("GET /api/clients", h.protected(http.MethodGet, h.HandleListClients))
 	mux.HandleFunc("DELETE /api/clients/{id}", h.protected(http.MethodDelete, h.HandleDeleteClient))
+	mux.HandleFunc("DELETE /api/clients/{id}/tokens", h.protected(http.MethodDelete, h.HandleDeauthorizeClient))
 	mux.HandleFunc("GET /api/clusters", h.protected(http.MethodGet, h.HandleListClusters))
 	mux.HandleFunc("POST /api/clusters", h.protected(http.MethodPost, h.HandleCreateCluster))
 	mux.HandleFunc("PUT /api/clusters/{id}", h.protected(http.MethodPut, h.HandleUpdateCluster))

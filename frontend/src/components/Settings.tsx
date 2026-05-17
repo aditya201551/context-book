@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { TokenInfo, ClientInfo, UserCluster } from '../types';
+import type { ClientInfo } from '../types';
 import { api } from '../lib/api';
 import { useToast } from '../lib/useToast';
 import Icon from './Icon';
@@ -10,7 +10,6 @@ const SETTINGS_NAV = [
   { id: 'general', label: 'General', icon: 'settings' },
   { id: 'install', label: 'Installation', icon: 'import' },
   { id: 'clients', label: 'Connected clients', icon: 'link' },
-  { id: 'tokens', label: 'Authorized apps', icon: 'tag' },
 ];
 
 function ConfirmModal({ title, body, danger, onConfirm, onCancel }: { title: string; body: string; danger?: boolean; onConfirm: () => void; onCancel: () => void }) {
@@ -28,14 +27,21 @@ function ConfirmModal({ title, body, danger, onConfirm, onCancel }: { title: str
   );
 }
 
-// -------- Clients tab --------
+function inferSourceKey(clientId: string, name: string): string {
+  const hay = (clientId + ' ' + name).toLowerCase();
+  if (hay.includes('claude')) return 'claude';
+  if (hay.includes('cursor')) return 'cursor';
+  return 'manual';
+}
+
 function ClientsTab() {
   const [clients, setClients] = useState<ClientInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const { toast, showToast } = useToast();
-  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [acting, setActing] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{ clientID: string; name: string; action: 'revoke' | 'delete' } | null>(null);
 
   const refreshClients = () => {
     api.clients()
@@ -59,25 +65,34 @@ function ClientsTab() {
     return () => { cancelled = true; };
   }, []);
 
-  const handleDisconnect = async (clientID: string, clientName: string) => {
-    setDisconnecting(clientID);
+  const handleRevoke = async (clientID: string, clientName: string) => {
+    setActing(clientID);
+    try {
+      await api.revokeClient(clientID);
+      showToast(`Access revoked for "${clientName}"`);
+      refreshClients();
+      setExpanded(null);
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to revoke access');
+    } finally {
+      setActing(null);
+      setConfirm(null);
+    }
+  };
+
+  const handleDelete = async (clientID: string, clientName: string) => {
+    setActing(clientID);
     try {
       await api.disconnectClient(clientID);
       setClients(prev => prev.filter(c => c.client_id !== clientID));
       setExpanded(null);
-      showToast(`"${clientName || clientID}" disconnected`);
+      showToast(`"${clientName}" deleted`);
     } catch (err: any) {
-      showToast(err?.message || 'Failed to disconnect');
+      showToast(err?.message || 'Failed to delete client');
     } finally {
-      setDisconnecting(null);
+      setActing(null);
+      setConfirm(null);
     }
-  };
-
-  const inferSourceKey = (clientId: string, name: string): string => {
-    const hay = (clientId + ' ' + name).toLowerCase();
-    if (hay.includes('claude')) return 'claude';
-    if (hay.includes('cursor')) return 'cursor';
-    return 'manual';
   };
 
   const MCP_URL = (import.meta.env.VITE_MCP_URL as string) || 'http://localhost:8081/mcp';
@@ -87,7 +102,7 @@ function ClientsTab() {
       <div className="settings-section-head">
         <div>
           <h2 className="settings-section-title">Connected clients</h2>
-          <p className="settings-section-sub">AI clients that access your context library via MCP. Disconnect any client at any time.</p>
+          <p className="settings-section-sub">AI clients that access your context library via MCP. Revoke access or delete the client entirely.</p>
         </div>
         <div className="settings-endpoint-badge">
           <Icon name="link" size={12} />
@@ -107,27 +122,37 @@ function ClientsTab() {
           {clients.map((c) => {
             const key = inferSourceKey(c.client_id, c.name);
             const src = getSource(key);
+            const isExpired = !c.active;
             return (
               <div key={c.client_id} className={`client-card ${expanded === c.client_id ? 'expanded' : ''}`}>
                 <div className="client-card-main" onClick={() => setExpanded(expanded === c.client_id ? null : c.client_id)}>
                   <div className="client-card-left">
                     <span className={`compact-src src-${key}`}>{src.glyph}</span>
                     <div className="client-info">
-                      <div className="client-name">{c.name || c.client_id}</div>
+                      <div className="client-name">{c.name}</div>
                       <div className="client-meta mono">
-                        <span className="conn-status conn-active">● active</span>
+                        <span className={`conn-status conn-${isExpired ? 'auth-required' : 'active'}`}>● {isExpired ? 'revoked' : 'active'}</span>
                         <span>·</span>
-                        <span>last seen {timeAgo(c.last_used_at || c.created_at)}</span>
+                        <span>{c.last_used_at ? `last seen ${timeAgo(c.last_used_at)}` : 'never used'}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="client-card-right" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div className="client-card-right" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {!isExpired && (
+                      <button
+                        className="btn btn-sm btn-ghost"
+                        disabled={acting === c.client_id}
+                        onClick={(e) => { e.stopPropagation(); setConfirm({ clientID: c.client_id, name: c.name, action: 'revoke' }); }}
+                      >
+                        Revoke
+                      </button>
+                    )}
                     <button
                       className="btn btn-sm btn-ghost-danger"
-                      disabled={disconnecting === c.client_id}
-                      onClick={(e) => { e.stopPropagation(); handleDisconnect(c.client_id, c.name || c.client_id); }}
+                      disabled={acting === c.client_id}
+                      onClick={(e) => { e.stopPropagation(); setConfirm({ clientID: c.client_id, name: c.name, action: 'delete' }); }}
                     >
-                      {disconnecting === c.client_id ? '…' : <Icon name="trash" size={12} />}
+                      {acting === c.client_id ? '…' : <Icon name="trash" size={12} />}
                     </button>
                     <span style={{ transform: expanded === c.client_id ? 'rotate(90deg)' : '', transition: 'transform 0.15s', color: 'var(--text-muted)', flexShrink: 0 }}>
                       <Icon name="chev" size={13} />
@@ -138,10 +163,6 @@ function ClientsTab() {
                 {expanded === c.client_id && (
                   <div className="client-detail">
                     <div className="client-detail-grid">
-                      <div className="detail-block">
-                        <div className="detail-label">Client ID</div>
-                        <div className="detail-val mono">{c.client_id}</div>
-                      </div>
                       <div className="detail-block">
                         <div className="detail-label">Authorized</div>
                         <div className="detail-val mono">{new Date(c.created_at).toLocaleDateString()}</div>
@@ -159,135 +180,19 @@ function ClientsTab() {
         </div>
       )}
 
-      {toast && <div className="settings-toast"><Icon name="check" size={12} /> {toast}</div>}
-    </div>
-  );
-}
-
-// -------- Authorized apps (real OAuth tokens) tab --------
-function tokenSourceKey(clientID: string): string {
-  const hay = (clientID || '').toLowerCase();
-  if (hay.includes('claude')) return 'claude';
-  if (hay.includes('cursor')) return 'cursor';
-  return 'manual';
-}
-
-function TokensTab() {
-  const [tokens, setTokens] = useState<TokenInfo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<{ hash: string; label: string } | null>(null);
-  const [revoking, setRevoking] = useState<string | null>(null);
-  const { toast, showToast } = useToast();
-
-  const load = () => {
-    setLoading(true);
-    api.tokens()
-      .then(data => { setTokens(data.tokens || []); setError(null); })
-      .catch((err: any) => setError(err?.message || 'Failed to load authorized apps'))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { load(); }, []);
-
-  const handleRevoke = async (hash: string, label: string) => {
-    setRevoking(hash);
-    try {
-      await api.revokeToken(hash);
-      setTokens(prev => prev.filter(t => t.token_hash !== hash));
-      setConfirm(null);
-      showToast(`Access revoked for ${label}`);
-    } catch (err: any) {
-      showToast(err?.message || 'Failed to revoke');
-    } finally {
-      setRevoking(null);
-    }
-  };
-
-  const now = Date.now();
-  const active = tokens.filter(t => !t.expires_at || new Date(t.expires_at).getTime() > now);
-  const expired = tokens.filter(t => t.expires_at && new Date(t.expires_at).getTime() <= now);
-
-  const renderRow = (t: TokenInfo, isExpired: boolean) => {
-    const key = tokenSourceKey(t.client_id);
-    const label = key === 'manual' ? t.client_id : getSource(key).label;
-    return (
-      <div key={t.token_hash} className={`oauth-row ${isExpired ? 'oauth-row-revoked' : ''}`}>
-        <div className="oauth-app-icon" style={{ background: 'var(--raised)', color: 'var(--text-dim)', borderColor: 'var(--border-soft)' }}>
-          {getSource(key).glyph}
-        </div>
-        <div className="oauth-main">
-          <div className="oauth-name" style={isExpired ? { color: 'var(--text-dim)' } : undefined}>{label}</div>
-          <div className="oauth-desc mono">{t.token_preview}</div>
-          <div className="oauth-meta mono">
-            {isExpired
-              ? <span style={{ color: '#d6706b' }}>● expired</span>
-              : <span style={{ color: '#7dd88f' }}>● active</span>}
-            <span>·</span>
-            <span>authorized {new Date(t.created_at).toLocaleDateString()}</span>
-            <span>·</span>
-            <span>last used {t.last_used_at ? timeAgo(t.last_used_at) : '—'}</span>
-            <span>·</span>
-            <span>expires {t.expires_at ? new Date(t.expires_at).toLocaleDateString() : '—'}</span>
-          </div>
-        </div>
-        <div className="oauth-actions">
-          <button
-            className="btn btn-sm btn-ghost-danger"
-            disabled={revoking === t.token_hash}
-            onClick={() => setConfirm({ hash: t.token_hash, label })}
-          >
-            {revoking === t.token_hash ? '…' : isExpired ? <Icon name="trash" size={12} /> : 'Revoke access'}
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="settings-tab-content">
-      <div className="settings-section-head">
-        <div>
-          <h2 className="settings-section-title">Authorized apps</h2>
-          <p className="settings-section-sub">Apps you granted access via the OAuth flow. Each holds a Bearer token scoped to your library. Revoking takes effect immediately — the app must re-authorize to reconnect.</p>
-        </div>
-      </div>
-
-      <div className="oauth-info-bar">
-        <Icon name="sparkle" size={13} />
-        <span>Tokens are issued through the OAuth 2.0 authorization flow and stored hashed — only a short preview is shown here.</span>
-      </div>
-
-      {loading && <div className="empty-hint mono">Loading authorized apps…</div>}
-      {error && <div className="empty-hint mono" style={{ color: '#d6706b' }}>{error}</div>}
-
-      {!loading && !error && (
-        <>
-          {active.length > 0 && (
-            <>
-              <div className="oauth-group-label">Active</div>
-              <div className="oauth-list">{active.map(t => renderRow(t, false))}</div>
-            </>
-          )}
-          {expired.length > 0 && (
-            <>
-              <div className="oauth-group-label" style={{ marginTop: 20 }}>Expired</div>
-              <div className="oauth-list">{expired.map(t => renderRow(t, true))}</div>
-            </>
-          )}
-          {tokens.length === 0 && (
-            <div className="empty-hint mono">No apps authorized yet. Connect an MCP client and complete the OAuth flow.</div>
-          )}
-        </>
-      )}
-
       {confirm && (
-        <ConfirmModal title="Revoke access"
-          body={`"${confirm.label}" will lose access immediately. The app must re-authorize via OAuth to reconnect.`}
-          danger
-          onConfirm={() => handleRevoke(confirm.hash, confirm.label)}
+        <ConfirmModal
+          title={confirm.action === 'delete' ? `Delete "${confirm.name}"?` : `Revoke access for "${confirm.name}"?`}
+          body={confirm.action === 'delete'
+            ? `This will permanently delete the "${confirm.name}" client registration and all its tokens across every user. This cannot be undone.`
+            : `The app must re-authorize via OAuth to reconnect. The client registration itself is not deleted.`}
+          danger={confirm.action === 'delete'}
+          onConfirm={() => confirm.action === 'delete'
+            ? handleDelete(confirm.clientID, confirm.name)
+            : handleRevoke(confirm.clientID, confirm.name)}
           onCancel={() => setConfirm(null)} />
       )}
+
       {toast && <div className="settings-toast"><Icon name="check" size={12} /> {toast}</div>}
     </div>
   );
@@ -538,7 +443,6 @@ export default function Settings() {
           {tab === 'general' && <GeneralTab />}
           {tab === 'install' && <InstallTab />}
           {tab === 'clients' && <ClientsTab />}
-          {tab === 'tokens' && <TokensTab />}
         </div>
       </div>
     </div>

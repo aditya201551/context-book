@@ -390,7 +390,7 @@ func (db *DB) ValidateTokenAndGetUserAndClient(ctx context.Context, token string
 // dashboard where ListTokens already returned the hash.
 func (db *DB) RevokeToken(ctx context.Context, storedToken, userID string) error {
 	_, err := db.Pool.Exec(ctx,
-		`DELETE FROM oauth_tokens WHERE token = $1 AND user_id = $2`,
+		`UPDATE oauth_tokens SET expires_at = now() WHERE token = $1 AND user_id = $2`,
 		storedToken, userID)
 	return err
 }
@@ -399,7 +399,7 @@ func (db *DB) RevokeToken(ctx context.Context, storedToken, userID string) error
 // self-revocation where the API client presents the raw bearer token it was issued.
 func (db *DB) RevokeOAuthToken(ctx context.Context, token string) error {
 	_, err := db.Pool.Exec(ctx,
-		`DELETE FROM oauth_tokens WHERE token = $1`,
+		`UPDATE oauth_tokens SET expires_at = now() WHERE token = $1`,
 		hashToken(token))
 	return err
 }
@@ -469,4 +469,28 @@ func (db *DB) GetAllValidTokens(ctx context.Context) ([]OAuthToken, error) {
 		tokens = append(tokens, t)
 	}
 	return tokens, nil
+}
+
+// DeauthorizeClient revokes all access tokens for a client-user pair
+// by setting their expiration to now(), so the client remains visible in the UI
+// with an inactive/revoked status.
+func (db *DB) DeauthorizeClient(ctx context.Context, clientID, userID string) error {
+	_, err := db.Pool.Exec(ctx,
+		`UPDATE oauth_tokens SET expires_at = now() WHERE client_id = $1 AND user_id = $2`,
+		clientID, userID)
+	return err
+}
+
+// DeleteOAuthClient fully removes the client registration row. Because of
+// ON DELETE CASCADE, this also deletes all tokens, refresh tokens, and codes for
+// this client across every user.
+func (db *DB) DeleteOAuthClient(ctx context.Context, clientID string) error {
+	res, err := db.Pool.Exec(ctx, `DELETE FROM oauth_clients WHERE client_id = $1`, clientID)
+	if err != nil {
+		return err
+	}
+	if res.RowsAffected() == 0 {
+		return fmt.Errorf("client not found")
+	}
+	return nil
 }

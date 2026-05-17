@@ -331,7 +331,7 @@ func (h *Handler) HandleListClients(w http.ResponseWriter, r *http.Request, user
 	})
 }
 
-// DELETE /api/clients/{id}
+// DELETE /api/clients/{id} — fully removes the client registration and all tokens.
 func (h *Handler) HandleDeleteClient(w http.ResponseWriter, r *http.Request, userID string) {
 	clientID := r.PathValue("id")
 	if clientID == "" {
@@ -339,9 +339,27 @@ func (h *Handler) HandleDeleteClient(w http.ResponseWriter, r *http.Request, use
 		return
 	}
 
-	if err := h.db.RevokeAllTokensForClient(r.Context(), clientID, userID); err != nil {
+	if err := h.db.DeleteOAuthClient(r.Context(), clientID); err != nil {
+		slog.Error("Failed to delete client", "error", err)
+		writeError(w, http.StatusInternalServerError, "Failed to delete client")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// DELETE /api/clients/{id}/tokens — revokes this user's tokens for the client
+// but keeps the client registration itself.
+func (h *Handler) HandleDeauthorizeClient(w http.ResponseWriter, r *http.Request, userID string) {
+	clientID := r.PathValue("id")
+	if clientID == "" {
+		writeError(w, http.StatusBadRequest, "client_id is required")
+		return
+	}
+
+	if err := h.db.DeauthorizeClient(r.Context(), clientID, userID); err != nil {
 		slog.Error("Failed to revoke client tokens", "error", err)
-		writeError(w, http.StatusInternalServerError, "Failed to disconnect client")
+		writeError(w, http.StatusInternalServerError, "Failed to revoke access")
 		return
 	}
 

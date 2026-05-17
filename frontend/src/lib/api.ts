@@ -135,6 +135,7 @@ export const api = {
     return { clients: (data.clients || []) as ClientInfo[] };
   },
   disconnectClient: (clientID: string) => api.del(`/api/clients/${clientID}`),
+  revokeClient: (clientID: string) => api.del(`/api/clients/${clientID}/tokens`),
   clusters: async (): Promise<{ clusters: UserCluster[] }> => {
     const data = await api.get('/api/clusters');
     return { clusters: (data.clusters || []) as UserCluster[] };
