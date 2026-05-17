@@ -210,6 +210,10 @@ svg { display: block; }
 .searchbar input::placeholder { color: var(--text-muted); }
 .searchbar .kbd { margin-left: auto; }
 
+.searchbar.askbar { cursor: pointer; text-align: left; }
+.askbar-text { flex: 1; font-size: 13px; color: var(--text-muted); }
+.searchbar.askbar:hover .askbar-text { color: var(--text-dim); }
+
 .btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 12px; border-radius: 7px;

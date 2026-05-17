@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import type { BookSummary, Book, Tweaks } from './types';
 import { api } from './lib/api';
@@ -14,7 +14,7 @@ import CommandPalette from './components/CommandPalette';
 import TweaksPanel from './components/TweaksPanel';
 import LoginPage from './components/LoginPage';
 import ErrorBoundary from './components/ErrorBoundary';
-import SearchBar from './components/SearchBar';
+import AskBar from './components/AskBar';
 
 const AUTHORIZE = () => {
   const [clientInfo, setClientInfo] = useState<any>(null);
@@ -221,7 +221,6 @@ function AppShell() {
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const [activeSource, setActiveSource] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
 
   // Sync route state with URL
   useEffect(() => {
@@ -299,7 +298,7 @@ function AppShell() {
       const tgt = e.target as HTMLElement;
       const inField = tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA');
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setCmdkOpen(v => !v); }
-      else if (e.key === '/' && !inField && !cmdkOpen) { e.preventDefault(); searchRef.current?.focus(); }
+      else if (e.key === '/' && !inField && !cmdkOpen) { e.preventDefault(); setCmdkOpen(true); }
       else if (e.key === 'n' && !inField && !cmdkOpen && !openBook && !createOpen) { setCreateOpen(true); }
       else if (e.key === 'Escape') {
         if (cmdkOpen) setCmdkOpen(false);
@@ -438,11 +437,7 @@ function AppShell() {
             <span className="topbar-title-crumb" style={{ textTransform: 'capitalize' }}>{route}</span>
           </div>
           <div className="topbar-spacer" />
-          <SearchBar onOpenBook={(bookId) => { setQuery(''); navigate('/library'); setRoute('library'); setView('library'); handleOpenBookById(bookId); }} />
-          <button className="btn btn-ghost" onClick={() => setCmdkOpen(true)}>
-            <Icon name="sparkle" size={13} /> Ask
-            <span className="kbd" style={{ marginLeft: 4 }}>⌘K</span>
-          </button>
+          <AskBar onOpen={() => setCmdkOpen(true)} />
           <button className="btn btn-primary" onClick={() => setCreateOpen(true)}>
             <Icon name="plus" size={13} stroke={2.5} /> New
           </button>
