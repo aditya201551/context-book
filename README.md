@@ -9,20 +9,20 @@ LLMs are stateless — each conversation starts from scratch. ContextBook gives 
 ## How It Works
 
 ```mermaid
-flowchart TB
+flowchart LR
     AI["🤖 AI Clients\nClaude · Cursor · Windsurf"]
     Browser["🌐 Browser Dashboard"]
     MCP["🔌 MCP Server :8081\n8 Bearer-authenticated tools"]
     API["⚙️ REST API :8080\nOAuth 2.0 · Books · Pages · Search"]
     DB["🗄️ PostgreSQL\npgvector · pg_trgm"]
-    VOYAGE["🧠 Voyage AI\nvoyage-4 (1024-dim embeddings)"]
+    VOYAGE["🧠 Voyage AI\nvoyage-4 (1024-dim)"]
 
-    AI -->|"MCP over HTTP\nBearer Token"| MCP
-    Browser -->|"Session Cookie\nHTTP + JSON"| API
-    MCP --> DB
-    API --> DB
-    API -->|"OAuth 2.0 PKCE"| AI
-    DB --> VOYAGE
+    AI -- "MCP · Bearer Token" --> MCP
+    Browser -- "Session · HTTP JSON" --> API
+    MCP --- DB
+    API --- DB
+    API -- "OAuth 2.0 PKCE" --> AI
+    DB --- VOYAGE
 ```
 
 Two Go binaries share a PostgreSQL database:
