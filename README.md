@@ -1,5 +1,7 @@
 # ContextBook
 
+[![smithery badge](https://smithery.ai/badge/context-book/connect)](https://smithery.ai/servers/context-book/connect)
+
 > Persistent semantic memory for AI tools, built on the Model Context Protocol.
 
 ContextBook is an open-source MCP server that gives AI tools (Claude, Cursor, Windsurf, etc.) long-term memory. Push context as **Books** and **Pages**, then semantically search across it — all powered by PostgreSQL + pgvector, pg_trgm, and Voyage AI embeddings.
@@ -56,13 +58,13 @@ All tools require a valid Bearer token and are scoped to the authenticated user.
 
 | Tool | Description |
 |------|-------------|
-| `create_or_update_book` | Create a Book or update its metadata; returns `book_id` |
-| `insert_page` | Push an atomic page into a Book; embeds immediately and stores real `token_count` |
-| `update_page` | Replace a page's content by `book_id` + `page_index`; re-embeds |
-| `delete_page` | Remove a page (indices are not re-numbered after deletion) |
-| `list_books` | Paginated list of Book metadata (no content) |
-| `get_book` | Retrieve all pages of a Book ordered by page index |
-| `search_pages` | Semantic search across all Books; returns matching pages with cosine similarity |
+| `book_create_or_update` | Create a Book or update its metadata; returns `book_id` |
+| `book_list` | Paginated list of Book metadata (no content) |
+| `book_get` | Retrieve all pages of a Book ordered by page index |
+| `page_insert` | Push an atomic page into a Book; embeds immediately and stores real `token_count` |
+| `page_update` | Replace a page's content by `book_id` + `page_index`; re-embeds |
+| `page_delete` | Remove a page (indices are not re-numbered after deletion) |
+| `page_search` | Semantic search across all Books; returns matching pages with cosine similarity |
 | `readme` | Returns the ContextBook usage guide; call once per session |
 
 **Knowledge model:** A **Book** is a metadata container (title, source, tags). A **Page** is an atomic content chunk with a `VOYAGE_DIMENSION`-dim embedding (default 1024) and a real `token_count` from the Voyage API. Pages are addressed by composite key: `book_id` + `page_index`.
