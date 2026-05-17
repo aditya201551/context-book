@@ -15,7 +15,13 @@ type InsertPageParams struct {
 	Content string `json:"content" jsonschema:"Page text content. Max 1000 words; split large content into meaningful chunks."`
 }
 
-func (s *Server) handleInsertPage(ctx context.Context, req *mcp.CallToolRequest, args InsertPageParams) (*mcp.CallToolResult, any, error) {
+type InsertPageOutput struct {
+	Status    string `json:"status" jsonschema:"Result status, always 'success' on success."`
+	PageIndex int    `json:"page_index" jsonschema:"Zero-based index assigned to the inserted page."`
+	StoredAt  string `json:"stored_at" jsonschema:"ISO 8601 timestamp when the page was stored."`
+}
+
+func (s *Server) handleInsertPage(ctx context.Context, req *mcp.CallToolRequest, args InsertPageParams) (*mcp.CallToolResult, InsertPageOutput, error) {
 	wordCount := len(strings.Fields(args.Content))
 	if wordCount > 1000 {
 		errBytes, _ := json.Marshal(map[string]string{
@@ -24,12 +30,12 @@ func (s *Server) handleInsertPage(ctx context.Context, req *mcp.CallToolRequest,
 		return &mcp.CallToolResult{
 			IsError: true,
 			Content: []mcp.Content{&mcp.TextContent{Text: string(errBytes)}},
-		}, nil, nil
+		}, InsertPageOutput{}, nil
 	}
 
 	userID, err := extractUserID(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, InsertPageOutput{}, err
 	}
 
 	resp, svcErr := s.ctxSvc.InsertPage(ctx, userID, ctxbridge.InsertPageRequest{
@@ -41,15 +47,12 @@ func (s *Server) handleInsertPage(ctx context.Context, req *mcp.CallToolRequest,
 		return &mcp.CallToolResult{
 			IsError: true,
 			Content: []mcp.Content{&mcp.TextContent{Text: string(errBytes)}},
-		}, nil, nil
+		}, InsertPageOutput{}, nil
 	}
 
-	resultBytes, _ := json.Marshal(map[string]interface{}{
-		"status":     "success",
-		"page_index": resp.PageIndex,
-		"stored_at":  resp.StoredAt.Format("2006-01-02T15:04:05Z07:00"),
-	})
-	return &mcp.CallToolResult{
-		Content: []mcp.Content{&mcp.TextContent{Text: string(resultBytes)}},
-	}, nil, nil
+	return nil, InsertPageOutput{
+		Status:    "success",
+		PageIndex: resp.PageIndex,
+		StoredAt:  resp.StoredAt.Format("2006-01-02T15:04:05Z07:00"),
+	}, nil
 }

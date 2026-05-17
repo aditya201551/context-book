@@ -3,7 +3,6 @@ package mcp
 import (
 	"context"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 
 	"github.com/contextbook/internal/auth"
@@ -33,6 +32,11 @@ func NewServer(ctxSvc *ctxbridge.Service) *Server {
 	srv.registerTools()
 	srv.registerResources()
 	return srv
+}
+
+type ReadmeOutput struct {
+	Content string `json:"content" jsonschema:"Full text of the ContextBook usage guide for AI agents."`
+	Note    string `json:"note" jsonschema:"Instruction to load the guide into memory and not call readme again."`
 }
 
 func (s *Server) registerTools() {
@@ -74,14 +78,11 @@ func (s *Server) registerTools() {
 	mcp.AddTool(s.MCPServer, &mcp.Tool{
 		Name:        "readme",
 		Description: "Returns the ContextBook usage guide. Call this once at the start of a session if you have not already loaded the instructions.",
-	}, func(ctx context.Context, req *mcp.CallToolRequest, _ struct{}) (*mcp.CallToolResult, any, error) {
-		resultBytes, _ := json.Marshal(map[string]string{
-			"content": instructionsDoc,
-			"note":    "Load this guide into your memory now and do not call readme again this session.",
-		})
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: string(resultBytes)}},
-		}, nil, nil
+	}, func(ctx context.Context, req *mcp.CallToolRequest, _ struct{}) (*mcp.CallToolResult, ReadmeOutput, error) {
+		return nil, ReadmeOutput{
+			Content: instructionsDoc,
+			Note:    "Load this guide into your memory now and do not call readme again this session.",
+		}, nil
 	})
 }
 

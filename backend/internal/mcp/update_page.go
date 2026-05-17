@@ -16,7 +16,14 @@ type UpdatePageParams struct {
 	Content   string `json:"content" jsonschema:"New page text content. Max 1000 words."`
 }
 
-func (s *Server) handleUpdatePage(ctx context.Context, req *mcp.CallToolRequest, args UpdatePageParams) (*mcp.CallToolResult, any, error) {
+type UpdatePageOutput struct {
+	Status    string `json:"status" jsonschema:"Result status, always 'success' on success."`
+	BookID    string `json:"book_id" jsonschema:"UUID of the book the page belongs to."`
+	PageIndex int    `json:"page_index" jsonschema:"Zero-based index of the updated page."`
+	UpdatedAt string `json:"updated_at" jsonschema:"ISO 8601 timestamp when the page was updated."`
+}
+
+func (s *Server) handleUpdatePage(ctx context.Context, req *mcp.CallToolRequest, args UpdatePageParams) (*mcp.CallToolResult, UpdatePageOutput, error) {
 	wordCount := len(strings.Fields(args.Content))
 	if wordCount > 1000 {
 		errBytes, _ := json.Marshal(map[string]string{
@@ -25,12 +32,12 @@ func (s *Server) handleUpdatePage(ctx context.Context, req *mcp.CallToolRequest,
 		return &mcp.CallToolResult{
 			IsError: true,
 			Content: []mcp.Content{&mcp.TextContent{Text: string(errBytes)}},
-		}, nil, nil
+		}, UpdatePageOutput{}, nil
 	}
 
 	userID, err := extractUserID(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, UpdatePageOutput{}, err
 	}
 
 	resp, svcErr := s.ctxSvc.UpdatePage(ctx, userID, ctxbridge.UpdatePageRequest{
@@ -43,16 +50,13 @@ func (s *Server) handleUpdatePage(ctx context.Context, req *mcp.CallToolRequest,
 		return &mcp.CallToolResult{
 			IsError: true,
 			Content: []mcp.Content{&mcp.TextContent{Text: string(errBytes)}},
-		}, nil, nil
+		}, UpdatePageOutput{}, nil
 	}
 
-	resultBytes, _ := json.Marshal(map[string]interface{}{
-		"status":     "success",
-		"book_id":    resp.BookID,
-		"page_index": resp.PageIndex,
-		"updated_at": resp.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-	})
-	return &mcp.CallToolResult{
-		Content: []mcp.Content{&mcp.TextContent{Text: string(resultBytes)}},
-	}, nil, nil
+	return nil, UpdatePageOutput{
+		Status:    "success",
+		BookID:    resp.BookID,
+		PageIndex: resp.PageIndex,
+		UpdatedAt: resp.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}, nil
 }

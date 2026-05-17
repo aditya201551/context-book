@@ -15,14 +15,20 @@ type CreateOrUpdateBookParams struct {
 	Tags   []string `json:"tags,omitempty" jsonschema:"Optional list of tags to categorize the book (e.g. ['go', 'backend'])."`
 }
 
-func (s *Server) handleCreateOrUpdateBook(ctx context.Context, req *mcp.CallToolRequest, args CreateOrUpdateBookParams) (*mcp.CallToolResult, any, error) {
+type CreateOrUpdateBookOutput struct {
+	Status    string `json:"status" jsonschema:"Result status, always 'success' on success."`
+	BookID    string `json:"book_id" jsonschema:"UUID of the created or updated book."`
+	Action    string `json:"action" jsonschema:"Either 'created' or 'updated'."`
+	CreatedAt string `json:"created_at,omitempty" jsonschema:"ISO 8601 timestamp when the book was created. Only set on create."`
+	Note      string `json:"note" jsonschema:"Human-readable advice about the result (e.g. store the book_id)."`
+}
+
+func (s *Server) handleCreateOrUpdateBook(ctx context.Context, req *mcp.CallToolRequest, args CreateOrUpdateBookParams) (*mcp.CallToolResult, CreateOrUpdateBookOutput, error) {
 	userID, err := extractUserID(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, CreateOrUpdateBookOutput{}, err
 	}
 
-	// Use the OAuth client name as the source (set by auth middleware from oauth_clients table).
-	// Falls back to "mcp" if no client name is available.
 	source := auth.GetClientName(ctx)
 	if source == "" {
 		source = "mcp"
@@ -39,29 +45,26 @@ func (s *Server) handleCreateOrUpdateBook(ctx context.Context, req *mcp.CallTool
 		return &mcp.CallToolResult{
 			IsError: true,
 			Content: []mcp.Content{&mcp.TextContent{Text: string(errBytes)}},
-		}, nil, nil
+		}, CreateOrUpdateBookOutput{}, nil
 	}
 
-	result := map[string]interface{}{
-		"status":  "success",
-		"book_id": resp.BookID,
+	out := CreateOrUpdateBookOutput{
+		Status: "success",
+		BookID: resp.BookID,
 	}
 
 	if resp.Updated {
-		result["action"] = "updated"
-		result["note"] = "Book metadata updated successfully."
+		out.Action = "updated"
+		out.Note = "Book metadata updated successfully."
 	} else {
-		result["action"] = "created"
-		result["created_at"] = resp.CreatedAt.Format("2006-01-02T15:04:05Z07:00")
+		out.Action = "created"
+		out.CreatedAt = resp.CreatedAt.Format("2006-01-02T15:04:05Z07:00")
 		if args.BookID != nil && *args.BookID != "" {
-			result["note"] = "Provided book_id was not found; a new book was created. Please update your stored book_id."
+			out.Note = "Provided book_id was not found; a new book was created. Please update your stored book_id."
 		} else {
-			result["note"] = "Please store this book_id in your memory for future page operations on this Book."
+			out.Note = "Please store this book_id in your memory for future page operations on this Book."
 		}
 	}
 
-	resultBytes, _ := json.Marshal(result)
-	return &mcp.CallToolResult{
-		Content: []mcp.Content{&mcp.TextContent{Text: string(resultBytes)}},
-	}, nil, nil
+	return nil, out, nil
 }
