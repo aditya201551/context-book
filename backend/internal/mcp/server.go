@@ -41,7 +41,7 @@ type ReadmeOutput struct {
 
 func (s *Server) registerTools() {
 	mcp.AddTool(s.MCPServer, &mcp.Tool{
-		Name:        "create_or_update_book",
+		Name:        "book.create_or_update",
 		Description: "Create a new Book or update an existing one. All fields (title, source, tags) are required. If book_id is omitted a new book is created and the new book_id is returned. If book_id is provided and exists, its metadata is replaced atomically. If book_id is provided but not found, a new book is created and a note is included in the response. Store the returned book_id in memory for future page operations.",
 		Annotations: &mcp.ToolAnnotations{
 			ReadOnlyHint:    false,
@@ -52,7 +52,27 @@ func (s *Server) registerTools() {
 	}, s.handleCreateOrUpdateBook)
 
 	mcp.AddTool(s.MCPServer, &mcp.Tool{
-		Name:        "insert_page",
+		Name:        "book.list",
+		Description: "List available Books. Returns metadata including book_id, title, and tags.",
+		Annotations: &mcp.ToolAnnotations{
+			ReadOnlyHint:   true,
+			IdempotentHint: true,
+			OpenWorldHint:  boolPtr(false),
+		},
+	}, s.handleListBooks)
+
+	mcp.AddTool(s.MCPServer, &mcp.Tool{
+		Name:        "book.get",
+		Description: "Retrieve all pages of a Book in order by its book_id.",
+		Annotations: &mcp.ToolAnnotations{
+			ReadOnlyHint:   true,
+			IdempotentHint: true,
+			OpenWorldHint:  boolPtr(false),
+		},
+	}, s.handleGetBook)
+
+	mcp.AddTool(s.MCPServer, &mcp.Tool{
+		Name:        "page.insert",
 		Description: "Insert a page of text (≤1000 words) into a Book. Each page is an atomic, semantically meaningful chunk. Maintains retrieval quality via meaningful splitting and overlap.",
 		Annotations: &mcp.ToolAnnotations{
 			ReadOnlyHint:    false,
@@ -63,7 +83,7 @@ func (s *Server) registerTools() {
 	}, s.handleInsertPage)
 
 	mcp.AddTool(s.MCPServer, &mcp.Tool{
-		Name:        "update_page",
+		Name:        "page.update",
 		Description: "Update a specific page within a Book using its book_id and page_index. Max content size: 1000 words.",
 		Annotations: &mcp.ToolAnnotations{
 			ReadOnlyHint:    false,
@@ -74,7 +94,7 @@ func (s *Server) registerTools() {
 	}, s.handleUpdatePage)
 
 	mcp.AddTool(s.MCPServer, &mcp.Tool{
-		Name:        "delete_page",
+		Name:        "page.delete",
 		Description: "Permanently remove a page from a Book using its book_id and page_index. Note: Page indices will not be re-indexed after deletion (gaps are normal).",
 		Annotations: &mcp.ToolAnnotations{
 			ReadOnlyHint:    false,
@@ -85,27 +105,7 @@ func (s *Server) registerTools() {
 	}, s.handleDeletePage)
 
 	mcp.AddTool(s.MCPServer, &mcp.Tool{
-		Name:        "list_books",
-		Description: "List available Books. Returns metadata including book_id, title, and tags.",
-		Annotations: &mcp.ToolAnnotations{
-			ReadOnlyHint:   true,
-			IdempotentHint: true,
-			OpenWorldHint:  boolPtr(false),
-		},
-	}, s.handleListBooks)
-
-	mcp.AddTool(s.MCPServer, &mcp.Tool{
-		Name:        "get_book",
-		Description: "Retrieve all pages of a Book in order by its book_id.",
-		Annotations: &mcp.ToolAnnotations{
-			ReadOnlyHint:   true,
-			IdempotentHint: true,
-			OpenWorldHint:  boolPtr(false),
-		},
-	}, s.handleGetBook)
-
-	mcp.AddTool(s.MCPServer, &mcp.Tool{
-		Name:        "search_pages",
+		Name:        "page.search",
 		Description: "Perform semantic search across all Books using a natural language query. Returns matching pages with their book_id and page_index.",
 		Annotations: &mcp.ToolAnnotations{
 			ReadOnlyHint:   true,
