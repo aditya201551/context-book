@@ -1,13 +1,12 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import type { BookSummary, Book, Tweaks } from './types';
 import { api, ApiError } from './lib/api';
+import { useToast } from './lib/useToast';
 import { ACCENTS, THEMES, TWEAK_DEFAULTS } from './lib/utils';
 import Sidebar from './components/Sidebar';
 import Icon from './components/Icon';
 import Dashboard from './components/Dashboard';
-import Library from './components/Library';
-import Settings from './components/Settings';
 import DetailDrawer from './components/DetailDrawer';
 import CreateForm from './components/CreateForm';
 import CommandPalette from './components/CommandPalette';
@@ -15,6 +14,9 @@ import TweaksPanel from './components/TweaksPanel';
 import LoginPage from './components/LoginPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import AskBar from './components/AskBar';
+
+const Library = lazy(() => import('./components/Library'));
+const Settings = lazy(() => import('./components/Settings'));
 
 const AUTHORIZE = () => {
   const [clientInfo, setClientInfo] = useState<any>(null);
@@ -220,7 +222,7 @@ function AppShell() {
   const [tweaksOpen, setTweaksOpen] = useState(false);
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const [activeSource, setActiveSource] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const { toast, showToast } = useToast();
 
   // Sync route state with URL
   useEffect(() => {
@@ -230,11 +232,6 @@ function AppShell() {
     else if (path === '/search') { setRoute('search'); setView('search'); }
     else { setRoute('dashboard'); setView('dashboard'); }
   }, [location.pathname]);
-
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2400);
-  }, []);
 
   // Apply theme
   useEffect(() => {
@@ -277,11 +274,18 @@ function AppShell() {
       .catch(() => {
         setIsAuthenticated(false);
         setAuthChecked(true);
-        if (path !== '/login' && path !== '/authorize') {
-          window.location.href = '/login?next=' + encodeURIComponent(path + location.search + location.hash);
-        }
       });
   }, []);
+
+  // Redirect to login if unauthenticated
+  useEffect(() => {
+    if (authChecked && !isAuthenticated) {
+      const path = location.pathname;
+      if (path !== '/login' && path !== '/authorize') {
+        window.location.href = '/login?next=' + encodeURIComponent(path + location.search + location.hash);
+      }
+    }
+  }, [authChecked, isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -410,7 +414,7 @@ function AppShell() {
 
   if (path === '/login') return <LoginPage />;
 
-  if (!isAuthenticated) { window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname + window.location.search + window.location.hash); return null; }
+  if (!isAuthenticated) return null;
 
   return (
     <div className="app">
@@ -451,6 +455,7 @@ function AppShell() {
             />
           )}
           {route === 'library' && (
+            <Suspense fallback={<div className="empty-hint mono" style={{padding: 40}}>Loading…</div>}>
             <Library
               books={visibleBooks}
               total={visibleCounts.total}
@@ -467,8 +472,13 @@ function AppShell() {
               activeSource={activeSource}
               onSourceFilter={setActiveSource}
             />
+            </Suspense>
           )}
-          {route === 'settings' && <Settings />}
+          {route === 'settings' && (
+            <Suspense fallback={<div className="empty-hint mono" style={{padding: 40}}>Loading…</div>}>
+            <Settings />
+            </Suspense>
+          )}
           {route === 'search' && (
             <div className="empty-state">
               <div className="empty-state-title">Semantic search lives in ⌘K</div>

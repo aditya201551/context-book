@@ -3,6 +3,7 @@ package context
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/pgvector/pgvector-go"
@@ -41,9 +42,17 @@ func (s *Service) InsertPage(ctx context.Context, userID string, req InsertPageR
 		return nil, fmt.Errorf("failed to store page: %w", err)
 	}
 
+	s.refreshAvgEmbedding(ctx, req.BookID)
+
 	return &InsertPageResponse{
 		PageID:    pageID,
 		PageIndex: index,
 		StoredAt:  time.Now(),
 	}, nil
+}
+
+func (s *Service) refreshAvgEmbedding(ctx context.Context, bookID string) {
+	if err := s.db.RefreshAvgEmbedding(ctx, bookID); err != nil {
+		slog.Error("failed to refresh avg_embedding", "book_id", bookID, "error", err)
+	}
 }

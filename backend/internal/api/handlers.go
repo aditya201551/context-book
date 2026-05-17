@@ -130,7 +130,7 @@ func (h *Handler) HandleCreateBook(w http.ResponseWriter, r *http.Request, userI
 	})
 	if err != nil {
 		slog.Error("Failed to create book", "error", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "Failed to create book")
 		return
 	}
 
@@ -151,7 +151,7 @@ func (h *Handler) HandleGetBook(w http.ResponseWriter, r *http.Request, userID s
 	resp, err := h.ctxSvc.GetBook(r.Context(), userID, ctxbridge.GetBookRequest{BookID: bookID})
 	if err != nil {
 		slog.Error("Failed to get book", "error", err)
-		writeError(w, http.StatusNotFound, err.Error())
+		writeError(w, http.StatusNotFound, "Book not found")
 		return
 	}
 
@@ -186,7 +186,7 @@ func (h *Handler) HandleUpdateBook(w http.ResponseWriter, r *http.Request, userI
 	})
 	if err != nil {
 		slog.Error("Failed to update book", "error", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "Failed to update book")
 		return
 	}
 
@@ -206,7 +206,7 @@ func (h *Handler) HandleDeleteBook(w http.ResponseWriter, r *http.Request, userI
 
 	if err := h.db.DeleteBook(r.Context(), bookID, userID); err != nil {
 		slog.Error("Failed to delete book", "error", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "Failed to delete book")
 		return
 	}
 
@@ -235,7 +235,7 @@ func (h *Handler) HandleInsertPage(w http.ResponseWriter, r *http.Request, userI
 	})
 	if err != nil {
 		slog.Error("Failed to insert page", "error", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "Failed to insert page")
 		return
 	}
 
@@ -279,7 +279,7 @@ func (h *Handler) HandleUpdatePage(w http.ResponseWriter, r *http.Request, userI
 	})
 	if err != nil {
 		slog.Error("Failed to update page", "error", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "Failed to update page")
 		return
 	}
 
@@ -310,7 +310,7 @@ func (h *Handler) HandleDeletePage(w http.ResponseWriter, r *http.Request, userI
 
 	if err := h.ctxSvc.DeletePage(r.Context(), userID, bookID, pageIndex); err != nil {
 		slog.Error("Failed to delete page", "error", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "Failed to delete page")
 		return
 	}
 
@@ -371,7 +371,7 @@ func (h *Handler) HandleSearch(w http.ResponseWriter, r *http.Request, userID st
 	})
 	if err != nil {
 		slog.Error("Search failed", "error", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "Search failed")
 		return
 	}
 

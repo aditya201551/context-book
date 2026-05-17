@@ -58,7 +58,7 @@ func main() {
 
 	h := auth.NewHandlers(database, cfg)
 
-	embedClient := embedding.NewVoyageClient(cfg.VoyageAPIKey, cfg.VoyageModel)
+	embedClient := embedding.NewCachedEmbedder(embedding.NewVoyageClient(cfg.VoyageAPIKey, cfg.VoyageModel), 256)
 	ctxService := ctxbridge.NewService(database, embedClient)
 	apiHandlers := api.NewHandlers(database, cfg, ctxService, h)
 
@@ -78,7 +78,9 @@ func main() {
 	mux.HandleFunc("/revoke", h.HandleRevoke)
 	mux.HandleFunc("/api/tokens", h.HandleTokenList)
 	mux.HandleFunc("/api/tokens/revoke", h.HandleTokenRevoke)
-	mux.HandleFunc("/debug/token-verify", h.HandleDebugTokenVerify)
+	if cfg.Env == "development" {
+		mux.HandleFunc("/debug/token-verify", h.HandleDebugTokenVerify)
+	}
 	mux.HandleFunc("/auth/google", h.HandleGoogleLogin)
 	mux.HandleFunc("/auth/google/callback", h.HandleGoogleCallback)
 	mux.HandleFunc("/auth/github", h.HandleGitHubLogin)

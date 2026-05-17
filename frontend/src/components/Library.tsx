@@ -38,7 +38,7 @@ export default function Library({
 
   useEffect(() => {
     api.clusters()
-      .then((data: any) => { setClusters(data.clusters || []); setLoadingClusters(false); })
+      .then(data => { setClusters(data.clusters || []); setLoadingClusters(false); })
       .catch(() => setLoadingClusters(false));
   }, []);
 
@@ -199,7 +199,7 @@ export default function Library({
 
       {(formOpen || editingCluster) && (
         <div className="cluster-form-overlay" onClick={() => { setFormOpen(false); setEditingCluster(null); }}>
-          <div className="cluster-form-wrap" onClick={e => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" aria-label={editingCluster ? 'Edit cluster' : 'New cluster'} className="cluster-form-wrap" onClick={e => e.stopPropagation()}>
             {formError && <div className="empty-hint" style={{ color: '#d6706b', fontSize: 12, marginBottom: 8 }}>{formError}</div>}
             <ClusterForm
               allTags={allTags}

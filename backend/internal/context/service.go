@@ -41,8 +41,8 @@ func (s *Service) ListBooks(ctx context.Context, userID string, req ListRequest)
 	if req.Limit <= 0 {
 		req.Limit = 20
 	}
-	if req.Limit > 100 {
-		req.Limit = 100
+	if req.Limit > 1000 {
+		req.Limit = 1000
 	}
 	if req.Offset < 0 {
 		req.Offset = 0
@@ -142,6 +142,8 @@ func (s *Service) UpdatePage(ctx context.Context, userID string, req UpdatePageR
 		return nil, fmt.Errorf("failed to update page: %w", err)
 	}
 
+	s.refreshAvgEmbedding(ctx, req.BookID)
+
 	return &UpdatePageResponse{
 		BookID:    req.BookID,
 		PageIndex: req.PageIndex,
@@ -153,5 +155,9 @@ func (s *Service) DeletePage(ctx context.Context, userID, bookID string, pageInd
 	if bookID == "" {
 		return fmt.Errorf("book_id is required")
 	}
-	return s.db.DeletePage(ctx, bookID, pageIndex, userID)
+	if err := s.db.DeletePage(ctx, bookID, pageIndex, userID); err != nil {
+		return err
+	}
+	s.refreshAvgEmbedding(ctx, bookID)
+	return nil
 }

@@ -232,9 +232,6 @@ func (db *DB) CreateBook(ctx context.Context, userID, title, source string, tags
 }
 
 func (db *DB) DeleteBook(ctx context.Context, bookID, userID string) error {
-	if _, err := db.Pool.Exec(ctx, `DELETE FROM context_book_pages WHERE book_id = $1`, bookID); err != nil {
-		return fmt.Errorf("failed to delete pages: %w", err)
-	}
 	result, err := db.Pool.Exec(ctx, `DELETE FROM context_books WHERE id = $1 AND user_id = $2`, bookID, userID)
 	if err != nil {
 		return fmt.Errorf("failed to delete book: %w", err)
@@ -297,6 +294,21 @@ func (db *DB) DeletePagesByBookID(ctx context.Context, bookID string) error {
 	return err
 }
 
+func (db *DB) RefreshAvgEmbedding(ctx context.Context, bookID string) error {
+	query := `
+		UPDATE context_books
+		SET avg_embedding = sub.avg_emb
+		FROM (
+			SELECT AVG(embedding)::vector AS avg_emb
+			FROM context_book_pages
+			WHERE book_id = $1
+		) sub
+		WHERE id = $1
+	`
+	_, err := db.Pool.Exec(ctx, query, bookID)
+	return err
+}
+
 // RelatedBook is a semantically similar book result.
 type RelatedBook struct {
 	BookID    string    `json:"book_id"`
@@ -314,25 +326,13 @@ func (db *DB) GetRelatedBooks(ctx context.Context, bookID, userID string, limit 
 		limit = 3
 	}
 	query := `
-		WITH target_avg AS (
-			SELECT AVG(embedding)::vector AS avg_emb
-			FROM context_book_pages
-			WHERE book_id = $1 AND user_id = $2
-		),
-		page_scores AS (
-			SELECT
-				p.book_id,
-				1 - (p.embedding <=> (SELECT avg_emb FROM target_avg)) AS score
-			FROM context_book_pages p
-			WHERE p.user_id = $2 AND p.book_id != $1
-			ORDER BY p.embedding <=> (SELECT avg_emb FROM target_avg)
-			LIMIT $3 * 10
-		)
-		SELECT b.id, b.title, b.tags, b.source, COALESCE(MAX(ps.score), 0) AS score, b.created_at
+		SELECT b2.id, b2.title, b2.tags, b2.source,
+			1 - (b2.avg_embedding <=> b.avg_embedding) AS score,
+			b2.created_at
 		FROM context_books b
-		JOIN page_scores ps ON ps.book_id = b.id
-		GROUP BY b.id, b.title, b.tags, b.source, b.created_at
-		ORDER BY COALESCE(MAX(ps.score), 0) DESC
+		JOIN context_books b2 ON b2.user_id = b.user_id AND b2.id != b.id
+		WHERE b.id = $1 AND b.user_id = $2 AND b.avg_embedding IS NOT NULL AND b2.avg_embedding IS NOT NULL
+		ORDER BY b2.avg_embedding <=> b.avg_embedding
 		LIMIT $3
 	`
 	rows, err := db.Pool.Query(ctx, query, bookID, userID, limit)

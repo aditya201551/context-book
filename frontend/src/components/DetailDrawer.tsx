@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Book } from '../types';
 import { getSource, fmtDate, ctxTokens } from '../lib/utils';
+import { useFocusTrap } from '../lib/useFocusTrap';
 import { api } from '../lib/api';
 import Icon from './Icon';
 
@@ -86,6 +87,7 @@ interface DetailDrawerProps {
 export default function DetailDrawer({ book, focusPageIndex, onClose, onEdit, onDelete, onOpenBook }: DetailDrawerProps) {
   const [related, setRelated] = useState<RelatedResult[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
+  const trapRef = useFocusTrap(!!book);
 
   useEffect(() => {
     if (!book) { setRelated([]); return; }
@@ -118,7 +120,7 @@ export default function DetailDrawer({ book, focusPageIndex, onClose, onEdit, on
 
   return (
     <div className="drawer-overlay" onClick={onClose}>
-      <aside className="drawer" onClick={e => e.stopPropagation()}>
+      <aside ref={trapRef} role="dialog" aria-modal="true" aria-label={book.title} className="drawer" onClick={e => e.stopPropagation()}>
         <header className="drawer-head">
           <div className="drawer-head-meta">
             <span className={`src-badge ${srcClass}`} data-glyph={s.glyph}>

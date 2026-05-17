@@ -1,4 +1,4 @@
-import type { ListBooksResponse, SearchResponse, Book, BookSummary, RankedPage } from '../types';
+import type { ListBooksResponse, SearchResponse, Book, BookSummary, User, TokenInfo, ClientInfo, UserCluster } from '../types';
 
 const BASE = (import.meta.env.VITE_API_URL as string) ?? '';
 
@@ -82,7 +82,10 @@ export const api = {
     return handleResponse(resp);
   },
 
-  me: () => api.get('/api/me'),
+  me: async (): Promise<User> => {
+    const data = await api.get('/api/me');
+    return { id: data.id, email: data.email, display_name: data.display_name, provider: data.provider };
+  },
   updateMe: (body: { display_name: string }) => api.patch('/api/me', body),
 
   listBooks: async (params?: { limit?: number; offset?: number; sort?: string }): Promise<ListBooksResponse> => {
@@ -121,12 +124,21 @@ export const api = {
     return { results: (data.results || []).map((r: any) => ({ ...r, tags: r.tags || [] })) };
   },
 
-  tokens: () => api.get('/api/tokens'),
+  tokens: async (): Promise<{ tokens: TokenInfo[] }> => {
+    const data = await api.get('/api/tokens');
+    return { tokens: (data.tokens || []) as TokenInfo[] };
+  },
   revokeToken: (tokenHash: string) => api.post('/api/tokens/revoke', { token_hash: tokenHash }),
   logout: () => api.post('/api/auth/logout', {}),
-  clients: () => api.get('/api/clients'),
+  clients: async (): Promise<{ clients: ClientInfo[] }> => {
+    const data = await api.get('/api/clients');
+    return { clients: (data.clients || []) as ClientInfo[] };
+  },
   disconnectClient: (clientID: string) => api.del(`/api/clients/${clientID}`),
-  clusters: () => api.get('/api/clusters'),
+  clusters: async (): Promise<{ clusters: UserCluster[] }> => {
+    const data = await api.get('/api/clusters');
+    return { clusters: (data.clusters || []) as UserCluster[] };
+  },
   createCluster: (body: { name: string; tags: string[]; color: string }) => api.post('/api/clusters', body),
   updateCluster: (id: string, body: { name: string; tags: string[]; color: string }) => api.put(`/api/clusters/${id}`, body),
   deleteCluster: (id: string) => api.del(`/api/clusters/${id}`),

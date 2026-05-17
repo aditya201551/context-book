@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import type { TokenInfo } from '../types';
+import type { TokenInfo, ClientInfo, UserCluster } from '../types';
 import { api } from '../lib/api';
+import { useToast } from '../lib/useToast';
 import Icon from './Icon';
 import { timeAgo, getSource } from '../lib/utils';
 import CopyBtn from './CopyBtn';
@@ -15,7 +16,7 @@ const SETTINGS_NAV = [
 function ConfirmModal({ title, body, danger, onConfirm, onCancel }: { title: string; body: string; danger?: boolean; onConfirm: () => void; onCancel: () => void }) {
   return (
     <div className="modal-backdrop" onClick={onCancel}>
-      <div className="modal-box" onClick={e => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-label={title} className="modal-box" onClick={e => e.stopPropagation()}>
         <h3 className="modal-title">{title}</h3>
         <p className="modal-body">{body}</p>
         <div className="modal-actions">
@@ -29,27 +30,25 @@ function ConfirmModal({ title, body, danger, onConfirm, onCancel }: { title: str
 
 // -------- Clients tab --------
 function ClientsTab() {
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<ClientInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const { toast, showToast } = useToast();
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
 
   const refreshClients = () => {
     api.clients()
-      .then((data: any) => setClients(data.clients || []))
+      .then(data => setClients(data.clients))
       .catch(() => {});
   };
 
   useEffect(() => {
     let cancelled = false;
     api.clients()
-      .then((data: any) => {
+      .then(data => {
         if (cancelled) return;
-        setClients(data.clients || []);
+        setClients(data.clients);
         setLoading(false);
       })
       .catch((err: any) => {
@@ -179,14 +178,12 @@ function TokensTab() {
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ hash: string; label: string } | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
+  const { toast, showToast } = useToast();
 
   const load = () => {
     setLoading(true);
     api.tokens()
-      .then((data: any) => { setTokens(data.tokens || []); setError(null); })
+      .then(data => { setTokens(data.tokens || []); setError(null); })
       .catch((err: any) => setError(err?.message || 'Failed to load authorized apps'))
       .finally(() => setLoading(false));
   };
@@ -308,7 +305,7 @@ function GeneralTab() {
   useEffect(() => {
     let cancelled = false;
     api.me()
-      .then((user: any) => {
+      .then(user => {
         if (cancelled) return;
         const name = user?.display_name || user?.email?.split('@')[0] || '';
         setDisplayName(name);
@@ -403,8 +400,7 @@ function GeneralTab() {
 
 // -------- Installation tab --------
 function InstallTab() {
-  const [toast, setToast] = useState<string | null>(null);
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
+  const { toast, showToast } = useToast();
 
   const MCP_URL = (import.meta.env.VITE_MCP_URL as string) || 'http://localhost:8081/mcp';
   const cursorConfig = btoa(JSON.stringify({ url: MCP_URL }));

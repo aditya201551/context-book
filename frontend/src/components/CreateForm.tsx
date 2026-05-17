@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Icon from './Icon';
+import { useFocusTrap } from '../lib/useFocusTrap';
 
 interface CreateFormProps {
   open: boolean;
@@ -40,6 +41,7 @@ export default function CreateForm({ open, onClose, onSave, initial }: CreateFor
   const [autoSaved, setAutoSaved] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isEdit = !!initial;
+  const trapRef = useFocusTrap(open);
 
   // Reset / load when opening
   useEffect(() => {
@@ -117,7 +119,7 @@ export default function CreateForm({ open, onClose, onSave, initial }: CreateFor
 
   return (
     <div className="drawer-overlay" onClick={onClose}>
-      <aside className="drawer drawer-create" onClick={e => e.stopPropagation()}>
+      <aside ref={trapRef} role="dialog" aria-modal="true" aria-label={isEdit ? 'Edit context' : 'New context'} className="drawer drawer-create" onClick={e => e.stopPropagation()}>
         <header className="drawer-head">
           <div className="drawer-head-meta">
             <span className="create-badge"><Icon name="plus" size={12} stroke={2.5}/> {isEdit ? 'Edit context' : 'New context'}</span>

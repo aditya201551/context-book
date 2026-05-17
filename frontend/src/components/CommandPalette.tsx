@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { BookSummary, RankedPage } from '../types';
 import { getSource } from '../lib/utils';
+import { useDebounce } from '../lib/useDebounce';
 import { api } from '../lib/api';
 import Icon from './Icon';
 
@@ -20,15 +21,6 @@ const ACTIONS: Action[] = [
   { id: 'nav-library', label: 'Go to Library', kind: 'nav' },
   { id: 'nav-settings', label: 'Go to Settings', kind: 'nav' },
 ];
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return debounced;
-}
 
 interface CommandPaletteProps {
   open: boolean;
@@ -154,7 +146,7 @@ export default function CommandPalette({ open, onClose, books, onOpenBook, onOpe
 
   return (
     <div className="cmdk-overlay" onClick={onClose}>
-      <div className="cmdk" onClick={e => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-label="Command palette" className="cmdk" onClick={e => e.stopPropagation()}>
         <div className="cmdk-head">
           <div className="cmdk-search">
             <Icon name="sparkle" size={16} />

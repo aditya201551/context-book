@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { BookSummary, User } from '../types';
+import type { BookSummary, User, ClientInfo } from '../types';
 import { api } from '../lib/api';
+import { useToast } from '../lib/useToast';
 import { getSource, timeAgo } from '../lib/utils';
 import Icon from './Icon';
 import CopyBtn from './CopyBtn';
@@ -23,14 +24,12 @@ export default function Dashboard({ books, counts, onOpenBook, onNewBook, onOpen
   const MCP_URL = (import.meta.env.VITE_MCP_URL as string) || 'http://localhost:8081/mcp';
   const isEmpty = books.length === 0;
   const [user, setUser] = useState<User | null>(null);
-  const [clients, setClients] = useState<any[]>([]);
-  const [toast, setToast] = useState<string | null>(null);
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
+  const [clients, setClients] = useState<ClientInfo[]>([]);
+  const { toast, showToast } = useToast();
 
   useEffect(() => {
     api.me().then(setUser).catch(() => {});
-    api.clients().then((data: any) => setClients(data.clients || [])).catch(() => {});
+    api.clients().then(data => setClients(data.clients)).catch(() => {});
   }, []);
 
   const firstName = user?.display_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
