@@ -2,7 +2,7 @@
 
 [![smithery badge](https://smithery.ai/badge/context-book/connect)](https://smithery.ai/servers/context-book/connect)
 
-**Stop re-explaining yourself to Agents. Give it the right context, right when it needs it.**
+**Stop re-explaining yourself to Agents. Give it the right context, right when needed.**
 
 LLMs are stateless — each conversation starts from scratch. ContextBook gives your AI tools a persistent, searchable knowledge library to draw the right context when they need it. No bloatware, no pre-loaded junk. Just the right information, at the right time.
 
