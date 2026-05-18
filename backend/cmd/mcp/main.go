@@ -59,6 +59,11 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("/.well-known/glama.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"$schema":"https://glama.ai/mcp/schemas/server.json","maintainers":["aditya201551"]}`))
+	})
+
 	// 1. PUBLIC ROUTES (No Auth Required)
 	mux.HandleFunc("/.well-known/oauth-protected-resource", h.HandleProtectedResource)
 	mux.HandleFunc("/.well-known/oauth-authorization-server", h.HandleWellKnown)
