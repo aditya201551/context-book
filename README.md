@@ -1,4 +1,6 @@
-# ContextBook
+<p align="center">
+  <img src="banner.png" alt="ContextBook" width="100%">
+</p>
 
 [![smithery badge](https://smithery.ai/badge/context-book/connect)](https://smithery.ai/servers/context-book/connect)
 
