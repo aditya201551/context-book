@@ -2,7 +2,7 @@
   <img src="banner.png" alt="ContextBook" width="100%">
 </p>
 
-[![smithery badge](https://smithery.ai/badge/context-book/connect)](https://smithery.ai/servers/context-book/connect)
+[![smithery badge](https://smithery.ai/badge/context-book/connect)](https://smithery.ai/servers/context-book/connect) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Stop re-explaining yourself to Agents. Give it the right context, right when needed.**
 
