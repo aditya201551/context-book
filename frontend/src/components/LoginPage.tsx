@@ -1,21 +1,12 @@
 import { useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
+import BrandMark from './BrandMark';
 
-/* Owl of Athena — symbol of wisdom */
-const OwlMark = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <ellipse cx="12" cy="13" rx="7" ry="8" stroke="#e8b765" strokeWidth="1.4"/>
-    <circle cx="9" cy="11" r="2.2" fill="#e8b765"/>
-    <circle cx="15" cy="11" r="2.2" fill="#e8b765"/>
-    <circle cx="9" cy="11" r="0.9" fill="#0c0c0e"/>
-    <circle cx="15" cy="11" r="0.9" fill="#0c0c0e"/>
-    <path d="M11 14 L12 15.5 L13 14" stroke="#e8b765" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    <path d="M5 7 L7 9 M19 7 L17 9" stroke="#e8b765" strokeWidth="1.2" strokeLinecap="round"/>
-  </svg>
+/* ContextBook Bridge Mark */
+const LoginMark = () => (
+  <BrandMark size={20} color="#e8b765" />
 );
-
-/* Greek temple illustration with columns, constellation, and engraving */
 const TempleIllustration = () => (
   <svg viewBox="0 0 460 440" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -229,7 +220,7 @@ export default function LoginPage() {
         {/* brand row */}
         <div className="login-panel-brand">
           <div className="login-panel-mark">
-            <OwlMark />
+            <LoginMark />
           </div>
           <div>
             <div className="login-panel-name">ContextBook</div>

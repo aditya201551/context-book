@@ -14,6 +14,8 @@ import TweaksPanel from './components/TweaksPanel';
 import LoginPage from './components/LoginPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import AskBar from './components/AskBar';
+import LandingPage from './components/landing/LandingPage';
+import BrandMark from './components/BrandMark';
 
 const Library = lazy(() => import('./components/Library'));
 const Settings = lazy(() => import('./components/Settings'));
@@ -100,15 +102,7 @@ const AUTHORIZE = () => {
         {/* brand header */}
         <div className="authorize-brand">
           <div className="brand-mark" style={{ width: 28, height: 28 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <ellipse cx="12" cy="13" rx="7" ry="8" stroke="currentColor" strokeWidth="1.4"/>
-              <circle cx="9" cy="11" r="2.2" fill="currentColor"/>
-              <circle cx="15" cy="11" r="2.2" fill="currentColor"/>
-              <circle cx="9" cy="11" r="0.9" fill="#0c0b0a"/>
-              <circle cx="15" cy="11" r="0.9" fill="#0c0b0a"/>
-              <path d="M11 14 L12 15.5 L13 14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              <path d="M5 7 L7 9 M19 7 L17 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-            </svg>
+            <BrandMark size={28} color="currentColor" />
           </div>
           <span className="brand-name" style={{ fontSize: 16 }}>ContextBook</span>
         </div>
@@ -126,15 +120,7 @@ const AUTHORIZE = () => {
               </svg>
             </div>
             <div className="authorize-cb-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <ellipse cx="12" cy="13" rx="7" ry="8" stroke="currentColor" strokeWidth="1.4"/>
-                <circle cx="9" cy="11" r="2.2" fill="currentColor"/>
-                <circle cx="15" cy="11" r="2.2" fill="currentColor"/>
-                <circle cx="9" cy="11" r="0.9" fill="#0c0b0a"/>
-                <circle cx="15" cy="11" r="0.9" fill="#0c0b0a"/>
-                <path d="M11 14 L12 15.5 L13 14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <path d="M5 7 L7 9 M19 7 L17 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-              </svg>
+              <BrandMark size={18} color="currentColor" />
             </div>
           </div>
 
@@ -277,11 +263,11 @@ function AppShell() {
       });
   }, []);
 
-  // Redirect to login if unauthenticated
+  // Redirect to landing page if unauthenticated (except for /login and /authorize)
   useEffect(() => {
     if (authChecked && !isAuthenticated) {
       const path = location.pathname;
-      if (path !== '/login' && path !== '/authorize') {
+      if (path !== '/login' && path !== '/authorize' && path !== '/') {
         window.location.href = '/login?next=' + encodeURIComponent(path + location.search + location.hash);
       }
     }
@@ -414,6 +400,9 @@ function AppShell() {
 
   if (path === '/login') return <LoginPage />;
 
+  // AppShell now only renders when authenticated. Unauthenticated users
+  // on protected routes see the landing page fallback, but the `/` route
+  // is handled directly in App().
   if (!isAuthenticated) return null;
 
   return (
@@ -539,6 +528,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/authorize" element={<AUTHORIZE />} />
         <Route path="*" element={<ErrorBoundary><AppShell /></ErrorBoundary>} />

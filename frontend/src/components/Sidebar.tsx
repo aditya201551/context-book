@@ -4,6 +4,8 @@ import { getSource, SOURCES } from '../lib/utils';
 import { api } from '../lib/api';
 import Icon from './Icon';
 
+import BrandMark from './BrandMark';
+
 interface SidebarProps {
   active: string;
   counts: { total: number; bySource: Record<string, number> };
@@ -44,15 +46,7 @@ export default function Sidebar({ active, counts, onNavigate, collapsed = false,
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="brand">
         <div className="brand-mark">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <ellipse cx="12" cy="13" rx="7" ry="8" stroke="currentColor" strokeWidth="1.4"/>
-            <circle cx="9" cy="11" r="2.2" fill="currentColor"/>
-            <circle cx="15" cy="11" r="2.2" fill="currentColor"/>
-            <circle cx="9" cy="11" r="0.9" fill="#0c0b0a"/>
-            <circle cx="15" cy="11" r="0.9" fill="#0c0b0a"/>
-            <path d="M11 14 L12 15.5 L13 14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-            <path d="M5 7 L7 9 M19 7 L17 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-          </svg>
+          <BrandMark size={20} color="#e8b765" />
         </div>
         {!collapsed && (
           <div>
