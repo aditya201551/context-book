@@ -4,6 +4,8 @@
 
 [![smithery badge](https://smithery.ai/badge/context-book/connect)](https://smithery.ai/servers/context-book/connect) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+<a href="https://www.producthunt.com/products/contextbook?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-contextbook" target="_blank" rel="noopener noreferrer"><img alt="ContextBook - Stop re-explaining. Give agents the right context | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1152644&amp;theme=light&amp;t=1779372437431"></a>
+
 **Stop re-explaining yourself to Agents. Give it the right context, right when needed.**
 
 LLMs are stateless — each conversation starts from scratch. ContextBook gives your AI tools a persistent, searchable knowledge library to draw the right context when they need it. No bloatware, no pre-loaded junk. Just the right information, at the right time.
