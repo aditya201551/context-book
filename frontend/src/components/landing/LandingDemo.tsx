@@ -12,20 +12,20 @@ interface ScriptTurn {
 }
 
 const SCRIPT: ScriptTurn = {
-  user: 'Continue the pgvector index work from yesterday.',
+  user: 'What did we decide about the Japan trip?',
   statelessLines: [
     { kind: 'meta',   text: '[ session: cold start · no memory ]' },
-    { kind: 'ai',     text: 'I don\'t have context about your previous work.' },
-    { kind: 'ai',     text: 'Could you share which index you were tuning,' },
-    { kind: 'ai',     text: 'the dimensionality, and your recall targets?' },
+    { kind: 'ai',     text: 'I don\'t have any trip details on file.' },
+    { kind: 'ai',     text: 'Where in Japan are you thinking of going?' },
+    { kind: 'ai',     text: 'And what time of year were you planning to travel?' },
   ],
   statefulLines: [
-    { kind: 'meta',   text: '[ pull_context(intent="pgvector index tuning") · 3 hits ]' },
-    { kind: 'recall', text: 'recalled — "pgvector HNSW tuning for our embedding workload"' },
-    { kind: 'recall', text: 'recalled — "API design decision: cursor vs offset pagination"' },
-    { kind: 'ai',     text: 'Picking up where you left off: m=16, ef_construction=64' },
-    { kind: 'ai',     text: 'gave you Recall@10 = 0.952 on the 200K-row table, p50 8ms.' },
-    { kind: 'ai',     text: 'Should we benchmark ef_search next or move to cursor pagination?' },
+    { kind: 'meta',   text: '[ pull_context(intent="Japan trip planning") · 3 hits ]' },
+    { kind: 'recall', text: 'recalled — "Tokyo → Kyoto itinerary, April 12–20"' },
+    { kind: 'recall', text: 'recalled — "Hotel in Shibuya booked, JR Pass wanted"' },
+    { kind: 'ai',     text: 'You\'re doing Tokyo → Kyoto, April 12–20.' },
+    { kind: 'ai',     text: 'You picked the Shibuya hotel and wanted a 7-day JR Pass.' },
+    { kind: 'ai',     text: 'The cherry blossom forecast just updated for your dates — want me to check which parks are peak?' },
   ],
 };
 
