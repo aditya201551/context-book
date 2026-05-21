@@ -36,6 +36,19 @@ const CLUSTER_ZONES: Record<string, { cx: number; cy: number; color: string; nam
   'incidents':           { cx: 0.22, cy: 0.72, color: '#82d4e0', name: 'Engineering' },
   'search':              { cx: 0.22, cy: 0.72, color: '#82d4e0', name: 'Engineering' },
   'product':             { cx: 0.66, cy: 0.78, color: '#b6a1fb', name: 'Research' },
+  // Non-technical clusters
+  'travel':              { cx: 0.82, cy: 0.32, color: '#ff8c7a', name: 'Travel' },
+  'cooking':             { cx: 0.75, cy: 0.52, color: '#e8a07a', name: 'Cooking' },
+  'recipes':             { cx: 0.75, cy: 0.52, color: '#e8a07a', name: 'Cooking' },
+  'fitness':             { cx: 0.88, cy: 0.42, color: '#7dd88f', name: 'Fitness' },
+  'health':              { cx: 0.88, cy: 0.42, color: '#7dd88f', name: 'Fitness' },
+  'language':            { cx: 0.70, cy: 0.45, color: '#b6a1fb', name: 'Learning' },
+  'learning':            { cx: 0.70, cy: 0.45, color: '#b6a1fb', name: 'Learning' },
+  'writing':             { cx: 0.85, cy: 0.62, color: '#ff8c7a', name: 'Creative' },
+  'creative':            { cx: 0.85, cy: 0.62, color: '#ff8c7a', name: 'Creative' },
+  'hobby':               { cx: 0.85, cy: 0.62, color: '#ff8c7a', name: 'Creative' },
+  'finance':             { cx: 0.90, cy: 0.72, color: '#ff8c7a', name: 'Personal' },
+  'life':                { cx: 0.86, cy: 0.68, color: '#ff8c7a', name: 'Personal' },
 };
 
 function pickZone(tags: string[]) {
@@ -53,49 +66,64 @@ interface SyntheticContext {
 }
 
 const SYNTHETIC_DATA: { title: string; tags: string[] }[] = [
+  // Technical — Distributed systems
   { title: 'Lamport timestamps vs vector clocks', tags: ['distributed-systems','theory','algorithms'] },
   { title: 'Two-phase commit — failure modes', tags: ['distributed-systems','algorithms'] },
-  { title: 'CRDTs: state-based vs op-based', tags: ['distributed-systems','algorithms','theory'] },
   { title: 'Gossip protocols at scale', tags: ['distributed-systems','algorithms'] },
-  { title: 'Consensus latency: Multi-Paxos benchmarks', tags: ['distributed-systems','algorithms','performance'] },
-  { title: 'Quorum reads under partition', tags: ['distributed-systems','theory'] },
-  { title: 'Spanner TrueTime — operational notes', tags: ['distributed-systems','theory'] },
+  { title: 'CRDTs: state-based vs op-based', tags: ['distributed-systems','algorithms','theory'] },
+  // Technical — Infrastructure
   { title: 'Postgres logical replication setup', tags: ['postgres','architecture'] },
   { title: 'pgbouncer pool sizing for 8 cores', tags: ['postgres','performance'] },
-  { title: 'Embedding cache hit-rate experiments', tags: ['embeddings','performance'] },
-  { title: 'BGE-M3 vs OpenAI ada — recall on our eval', tags: ['embeddings','performance','ml'] },
-  { title: 'MCP server lifecycle on macOS', tags: ['mcp','system'] },
-  { title: 'Context compression ratios — what actually compresses', tags: ['context-book','memory','embeddings'] },
   { title: 'Vault sharding strategy beyond 10M chunks', tags: ['architecture','postgres','performance'] },
-  { title: 'Reranker layer: cross-encoder benchmark', tags: ['embeddings','performance','ml'] },
   { title: 'WAL backpressure on burst writes', tags: ['postgres','performance'] },
+  { title: 'Embedding cache hit-rate experiments', tags: ['embeddings','performance'] },
+  { title: 'MCP server lifecycle on macOS', tags: ['mcp','system'] },
   { title: 'Token-budget governor design', tags: ['architecture','context-book'] },
+  // Technical — Engineering
+  { title: 'OAuth refresh token rotation', tags: ['auth','security','oauth'] },
+  { title: 'Rate limiter — token bucket vs sliding window', tags: ['api','architecture'] },
+  { title: 'WebSocket reconnect strategy', tags: ['api','frontend'] },
+  { title: 'gRPC deadlines — defaults are wrong', tags: ['api','debugging'] },
+  { title: 'TypeScript strictness migration plan', tags: ['frontend','architecture'] },
+  { title: 'React 19 transitions — when to use', tags: ['react','frontend'] },
+  // Technical — ML / Research
+  { title: 'Speculative decoding — what works', tags: ['ml','research'] },
+  { title: 'LoRA vs full fine-tune for retrieval', tags: ['ml','research','embeddings'] },
+  { title: 'BM25 + dense fusion — eval methodology', tags: ['ml','research','search'] },
+  // Non-technical — Travel
+  { title: 'Japan trip — Tokyo → Kyoto itinerary, April 12–20', tags: ['travel','personal'] },
+  { title: 'JR Pass vs individual tickets — cost breakdown', tags: ['travel','personal'] },
+  { title: 'Best cherry blossom viewing spots in Tokyo', tags: ['travel','journal'] },
+  { title: 'Hotel booking: Shibuya vs Shinjuku comparison', tags: ['travel','personal'] },
+  // Non-technical — Cooking / Food
+  { title: 'Thai green curry recipe — coconut cream substitution', tags: ['cooking','personal','recipes'] },
+  { title: 'Sourdough starter feeding schedule', tags: ['cooking','recipes'] },
+  { title: 'Weekly meal prep plan — vegetarian batch cooking', tags: ['cooking','recipes','personal'] },
+  { title: 'Grocery list: pantry staples for quick dinners', tags: ['cooking','personal'] },
+  // Non-technical — Fitness
+  { title: 'Leg day progression: 185 → 190 lb squats', tags: ['fitness','health','personal'] },
+  { title: 'Left knee tenderness — skip lungges this week', tags: ['fitness','health','personal'] },
+  { title: 'Running cadence target: 170 spm', tags: ['fitness','health'] },
+  { title: 'Weekly yoga sequence for lower back relief', tags: ['fitness','health','personal'] },
+  // Non-technical — Language learning
+  { title: 'Spanish subjunctive — "espero que" drills', tags: ['language','learning','personal'] },
+  { title: 'Anki flashcards: 500 most common Spanish verbs', tags: ['language','learning','personal'] },
+  { title: 'French pronunciation: nasal vowel practice', tags: ['language','learning'] },
+  { title: 'Weekly Duolingo streak — 42 days', tags: ['language','learning','journal'] },
+  // Non-technical — Creative / Personal
+  { title: 'Sci-fi story outline — Chapter 3: The Signal', tags: ['writing','creative','personal'] },
+  { title: 'Character arc notes: Mara and the AI', tags: ['writing','creative','personal'] },
+  { title: 'Photography project: neon-lit alleyways', tags: ['creative','hobby','personal'] },
+  { title: 'Monthly budget: groceries overspent by $47', tags: ['finance','personal'] },
+  { title: 'Reading list — Q2: sci-fi and tech history', tags: ['personal','journal','ideas'] },
+  { title: 'Career conversation with mentor — key takeaways', tags: ['personal','journal'] },
+  { title: 'Side project: tiny vector DB in Zig', tags: ['ideas','personal'] },
+  { title: 'Weekly journal — May 02', tags: ['journal','personal'] },
+  // Team & process
   { title: 'Post-mortem template — what we actually keep', tags: ['team','process','incidents'] },
   { title: 'Q3 planning offsite agenda', tags: ['meeting','roadmap','team'] },
   { title: 'On-call rotation fairness audit', tags: ['team','process'] },
   { title: 'RFC: code review SLAs', tags: ['team','process'] },
-  { title: 'Hiring loop — staff eng debrief', tags: ['onboarding','team','process'] },
-  { title: 'Mixtral 8x7B — inference cost notes', tags: ['ml','research','papers'] },
-  { title: 'RoPE scaling for long context', tags: ['ml','research','papers'] },
-  { title: 'Speculative decoding — what works', tags: ['ml','research'] },
-  { title: 'LoRA vs full fine-tune for retrieval', tags: ['ml','research','embeddings'] },
-  { title: 'Constitutional AI — implementation notes', tags: ['ml','research','papers'] },
-  { title: 'BM25 + dense fusion — eval methodology', tags: ['ml','research','search'] },
-  { title: 'TypeScript strictness migration plan', tags: ['frontend','architecture'] },
-  { title: 'OAuth refresh token rotation', tags: ['auth','security','oauth'] },
-  { title: 'Rate limiter — token bucket vs sliding window', tags: ['api','architecture'] },
-  { title: 'WebSocket reconnect strategy', tags: ['api','frontend'] },
-  { title: 'Tracing context propagation across MCP', tags: ['mcp','debugging','architecture'] },
-  { title: 'CORS gotcha for streaming responses', tags: ['api','debugging'] },
-  { title: 'Tokio runtime: blocking detector setup', tags: ['rust','debugging','performance'] },
-  { title: 'React 19 transitions — when to use', tags: ['react','frontend'] },
-  { title: 'Service worker cache invalidation', tags: ['frontend','architecture'] },
-  { title: 'gRPC deadlines — defaults are wrong', tags: ['api','debugging'] },
-  { title: 'Reading list — Q2', tags: ['personal','journal','ideas'] },
-  { title: 'Career conversation with mentor', tags: ['personal','journal'] },
-  { title: 'Side project: tiny vector DB in Zig', tags: ['ideas','personal'] },
-  { title: 'Weekly journal — May 02', tags: ['journal','personal'] },
-  { title: 'Weekly journal — May 09', tags: ['journal','personal'] },
 ];
 
 function buildAllContexts(): SyntheticContext[] {
@@ -396,8 +424,13 @@ export default function LandingConstellation() {
             <span><span className="dot" style={{ background: '#7ab8ff' }}></span>Distributed</span>
             <span><span className="dot" style={{ background: '#e8b765' }}></span>Infrastructure</span>
             <span><span className="dot" style={{ background: '#7dd88f' }}></span>Team &amp; process</span>
-            <span><span className="dot" style={{ background: '#b6a1fb' }}></span>Research</span>
             <span><span className="dot" style={{ background: '#82d4e0' }}></span>Engineering</span>
+            <span><span className="dot" style={{ background: '#b6a1fb' }}></span>Research</span>
+            <span><span className="dot" style={{ background: '#ff8c7a' }}></span>Travel</span>
+            <span><span className="dot" style={{ background: '#e8a07a' }}></span>Cooking</span>
+            <span><span className="dot" style={{ background: '#7dd88f' }}></span>Fitness</span>
+            <span><span className="dot" style={{ background: '#b6a1fb' }}></span>Learning</span>
+            <span><span className="dot" style={{ background: '#ff8c7a' }}></span>Creative</span>
             <span><span className="dot" style={{ background: '#ff8c7a' }}></span>Personal</span>
           </div>
           <span>hover · type to pull</span>
