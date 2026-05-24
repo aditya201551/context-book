@@ -140,25 +140,46 @@
   position: relative;
   min-height: 100vh;
   padding-top: 100px; padding-bottom: 60px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
   overflow: hidden;
-  text-align: center;
+}
+.landing-page .hero-split {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 60px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 clamp(24px, 4vw, 64px);
+  min-height: calc(100vh - 160px);
+}
+.landing-page .hero-left {
+  flex: 1 1 40%;
+  max-width: 580px;
+  text-align: left;
+  z-index: 3;
+}
+.landing-page .hero-right {
+  flex: 1 1 0%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 .landing-page .hero-shaft {
-  position: absolute; top: 0; left: 50%;
-  width: 700px; height: 100%;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse 350px 600px at 50% 30%, rgba(232,183,101,0.12), transparent 70%);
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: radial-gradient(ellipse 500px 700px at 70% 40%, rgba(232,183,101,0.10), transparent 70%);
   pointer-events: none;
 }
 .landing-page .hero-temple-wrap {
   position: relative;
-  width: min(900px, 92vw);
-  margin-top: 24px;
+  width: 100%;
+  max-width: 900px;
   transform-style: preserve-3d;
 }
 .landing-page .hero-temple {
   width: 100%;
+  max-width: 100%;
   display: block;
   filter: drop-shadow(0 30px 60px rgba(0,0,0,0.6));
 }
@@ -182,12 +203,12 @@
 
 .landing-page .hero-title {
   font-family: var(--font-serif);
-  font-size: clamp(36px, 5.6vw, 84px);
+  font-size: clamp(36px, 4.5vw, 72px);
   font-weight: 500; letter-spacing: -0.02em;
-  margin: 0 auto; line-height: 1.05;
+  margin: 0; line-height: 1.05;
   color: #f0e6d0;
   position: relative; z-index: 3;
-  width: 100%; max-width: 900px;
+  width: 100%;
   text-wrap: pretty;
 }
 .landing-page .hero-title em {
@@ -200,15 +221,15 @@
 .landing-page .hero-sub {
   font-size: clamp(15px, 1.4vw, 18px);
   color: var(--text-dim);
-  margin: 32px auto 0;
-  max-width: 580px; line-height: 1.6;
+  margin: 32px 0 0;
+  max-width: 480px; line-height: 1.6;
   text-wrap: pretty;
   position: relative; z-index: 3;
 }
-.landing-page .hero-cta { display: flex; gap: 12px; margin-top: 38px; justify-content: center; flex-wrap: wrap; }
+.landing-page .hero-cta { display: flex; gap: 12px; margin-top: 38px; justify-content: flex-start; flex-wrap: wrap; }
 .landing-page .hero-meta {
   margin-top: 26px;
-  display: inline-flex; gap: 22px; align-items: center;
+  display: flex; gap: 22px; align-items: center;
   font-family: var(--font-mono); font-size: 11px;
   color: var(--text-muted); letter-spacing: 0.06em;
 }
@@ -237,6 +258,26 @@
 }
 @media (max-width: 720px) {
   .landing-page .fragment { display: none; }
+}
+@media (max-width: 980px) {
+  .landing-page .hero-split {
+    flex-direction: column;
+    gap: 48px;
+    text-align: center;
+    min-height: auto;
+    padding-top: 40px;
+  }
+  .landing-page .hero-left {
+    max-width: 100%;
+    text-align: center;
+  }
+  .landing-page .hero-right {
+    width: 100%;
+    max-width: 600px;
+  }
+  .landing-page .hero-cta { justify-content: center; }
+  .landing-page .hero-meta { justify-content: center; }
+  .landing-page .hero-sub { margin: 32px auto 0; max-width: 520px; }
 }
 .landing-page .fragment::before {
   content: ''; position: absolute; top: 50%; transform: translateY(-50%);

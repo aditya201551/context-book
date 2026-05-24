@@ -176,40 +176,44 @@ interface LandingHeroProps {
 export default function LandingHero({ onOpenLibrary }: LandingHeroProps) {
   return (
     <section className="hero">
-      <div className="hero-shaft"></div>
-      <FloatingFragments />
-      <HeroEyebrow />
+      <div className="hero-split">
+        <div className="hero-left">
+          <HeroEyebrow />
 
-      <h1 className="hero-title">
-        Memory for the<br />
-        <em>thinking machine.</em>
-      </h1>
+          <h1 className="hero-title">
+            Memory for the<br />
+            <em>thinking machine.</em>
+          </h1>
 
-      <p className="hero-sub">
-        ContextBook is a cross-platform memory layer for AI agents.
-        Compressed insights, not raw logs &mdash; retrieved by meaning, not by name.
-        One library, every model.
-      </p>
+          <p className="hero-sub">
+            ContextBook is a cross-platform memory layer for AI agents.
+            Compressed insights, not raw logs &mdash; retrieved by meaning, not by name.
+            One library, every model.
+          </p>
 
-      <div className="hero-cta">
-        <button className="btn btn-primary btn-lg" onClick={onOpenLibrary}>
-          <span>Open the Library</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path>
-          </svg>
-        </button>
-          <a className="btn btn-lg" href="https://github.com/aditya201551/context-book" target="_blank" rel="noreferrer">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57v-2c-3.34.73-4.04-1.61-4.04-1.61-.55-1.4-1.34-1.77-1.34-1.77-1.09-.74.08-.73.08-.73 1.21.08 1.84 1.24 1.84 1.24 1.07 1.84 2.82 1.31 3.51 1 .1-.78.42-1.31.76-1.61-2.66-.3-5.47-1.34-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.49 5.92.42.36.81 1.1.81 2.22v3.29c0 .31.22.7.83.57A12 12 0 0 0 12 .3" /></svg>
-          <span>Star on GitHub</span>
-        </a>
+          <div className="hero-cta">
+            <button className="btn btn-primary btn-lg" onClick={onOpenLibrary}>
+              <span>Open the Library</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path>
+              </svg>
+            </button>
+            <a className="btn btn-lg" href="https://github.com/aditya201551/context-book" target="_blank" rel="noreferrer">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57v-2c-3.34.73-4.04-1.61-4.04-1.61-.55-1.4-1.34-1.77-1.34-1.77-1.09-.74.08-.73.08-.73 1.21.08 1.84 1.24 1.84 1.24 1.07 1.84 2.82 1.31 3.51 1 .1-.78.42-1.31.76-1.61-2.66-.3-5.47-1.34-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.49 5.92.42.36.81 1.1.81 2.22v3.29c0 .31.22.7.83.57A12 12 0 0 0 12 .3" /></svg>
+              <span>Star on GitHub</span>
+            </a>
+          </div>
+
+          <div className="hero-meta">
+            <span><span className="pill-dot"></span> Open source · MIT</span>
+            <span><span className="pill-dot"></span> Self-hosted</span>
+          </div>
+        </div>
+        <div className="hero-right">
+          <FloatingFragments />
+          <HeroTemple />
+        </div>
       </div>
-
-      <div className="hero-meta">
-        <span><span className="pill-dot"></span> Open source · MIT</span>
-        <span><span className="pill-dot"></span> Self-hosted</span>
-      </div>
-
-      <HeroTemple />
     </section>
   );
 }
