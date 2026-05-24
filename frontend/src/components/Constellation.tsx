@@ -109,6 +109,36 @@ function normalizeProjection(embedding: unknown, count: number): number[][] | nu
   return points;
 }
 
+function projectionPad(w: number, h: number): number {
+  return Math.min(80, Math.max(40, Math.min(w, h) * 0.08));
+}
+
+function scaleProjectionToCanvas(projection: number[][], books: ConstellationBook[], w: number, h: number): Dot[] {
+  const pad = projectionPad(w, h);
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const [x, y] of projection) {
+    if (x < minX) minX = x; if (x > maxX) maxX = x;
+    if (y < minY) minY = y; if (y > maxY) maxY = y;
+  }
+
+  const rangeX = maxX - minX || 1;
+  const rangeY = maxY - minY || 1;
+
+  return projection.map(([x, y], idx) => {
+    const nx = (x - minX) / rangeX;
+    const ny = (y - minY) / rangeY;
+    const b = books[idx];
+    const r = Math.max(2.5, Math.min(6, 2.5 + Math.sqrt(b?.token_count || 0) * 0.15));
+    return {
+      book: b,
+      idx,
+      x: pad + nx * (w - pad * 2),
+      y: pad + ny * (h - pad * 2),
+      r,
+    };
+  });
+}
+
 const AMBER = '#e8b765';
 const AMBER_DIM = 'rgba(232,183,101,0.15)';
 const AMBER_EDGE = 'rgba(232,183,101,';
@@ -171,19 +201,26 @@ export default function Constellation({ onOpenBook }: ConstellationProps) {
   useEffect(() => {
     if (books.length < minimumRequired) return;
 
+    let cancelled = false;
     const w = size.w || 800;
     const h = size.h || 520;
-    const pad = 40;
+
+    const commitDots = (dots: Dot[]) => {
+      if (cancelled) return;
+      targetDotsRef.current = dots;
+      if (dotsRef.current.length === 0 || dotsRef.current.length !== dots.length) {
+        dotsRef.current = dots;
+      }
+      setUmapRunning(false);
+      setDirty(false);
+    };
 
     // Fallback: simple deterministic layout for very small libraries where UMAP
     // degenerates (nNeighbors=1 creates a 1-NN chain with no spatial meaning).
     if (books.length <= 3) {
       const dots = buildFallbackDots(books, w, h);
-      targetDotsRef.current = dots;
-      if (dotsRef.current.length === 0) dotsRef.current = dots;
-      setUmapRunning(false);
-      setDirty(false);
-      return;
+      commitDots(dots);
+      return () => { cancelled = true; };
     }
 
     setUmapRunning(true);
@@ -212,54 +249,24 @@ export default function Constellation({ onOpenBook }: ConstellationProps) {
     umap.fitAsync(embeddings, (epoch) => {
       return true;
     }).then((embedding: number[][]) => {
+      if (cancelled) return;
       const w = size.w || 800;
       const h = size.h || 520;
-      const pad = 40;
       const projection = normalizeProjection(embedding, books.length);
 
       if (!projection) {
-        const dots = buildFallbackDots(books, w, h);
-        targetDotsRef.current = dots;
-        if (dotsRef.current.length === 0 || dotsRef.current.length !== dots.length) {
-          dotsRef.current = dots;
-        }
-        setUmapRunning(false);
-        setDirty(false);
+        commitDots(buildFallbackDots(books, w, h));
         return;
       }
 
-      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-      for (const [x, y] of projection) {
-        if (x < minX) minX = x; if (x > maxX) maxX = x;
-        if (y < minY) minY = y; if (y > maxY) maxY = y;
-      }
-      const rangeX = maxX - minX || 1;
-      const rangeY = maxY - minY || 1;
-
-      const dots: Dot[] = projection.map(([x, y], idx) => {
-        const nx = (x - minX) / rangeX;
-        const ny = (y - minY) / rangeY;
-        const b = books[idx];
-        const r = Math.max(2.5, Math.min(6, 2.5 + Math.sqrt(b?.token_count || 0) * 0.15));
-        return {
-          book: books[idx],
-          idx,
-          x: pad + nx * (w - pad * 2),
-          y: pad + ny * (h - pad * 2),
-          r,
-        };
-      });
-
-      targetDotsRef.current = dots;
-      if (dotsRef.current.length === 0) {
-        dotsRef.current = dots;
-      }
-      setUmapRunning(false);
-      setDirty(false);
+      commitDots(scaleProjectionToCanvas(projection, books, w, h));
     }).catch((err: any) => {
+      if (cancelled) return;
       console.error('UMAP failed', err);
       setUmapRunning(false);
     });
+
+    return () => { cancelled = true; };
   }, [books, minimumRequired, size.w, size.h]);
 
   // Canvas render loop
