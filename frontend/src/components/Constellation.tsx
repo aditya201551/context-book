@@ -109,8 +109,65 @@ function normalizeProjection(embedding: unknown, count: number): number[][] | nu
   return points;
 }
 
+function clamp(n: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, n));
+}
+
 function projectionPad(w: number, h: number): number {
   return Math.min(80, Math.max(40, Math.min(w, h) * 0.08));
+}
+
+function layoutNeighborCount(count: number): number {
+  return Math.max(2, Math.min(15, Math.floor(Math.sqrt(count) * 2), count - 1));
+}
+
+function relaxDots(dots: Dot[], w: number, h: number, pad: number): Dot[] {
+  if (dots.length < 2) return dots;
+
+  const relaxed = dots.map(dot => ({ ...dot }));
+  const anchors = dots.map(dot => ({ x: dot.x, y: dot.y }));
+  const baseMinDist = clamp(Math.min(w, h) / Math.sqrt(dots.length) * 0.22, 20, 48);
+  const iterations = dots.length < 40 ? 90 : 60;
+
+  for (let iter = 0; iter < iterations; iter++) {
+    for (let i = 0; i < relaxed.length; i++) {
+      for (let j = i + 1; j < relaxed.length; j++) {
+        const a = relaxed[i];
+        const b = relaxed[j];
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let dist = Math.hypot(dx, dy);
+
+        if (dist < 0.001) {
+          const angle = seededRNG((i + 1) * 1009 + (j + 1) * 9176)() * Math.PI * 2;
+          dx = Math.cos(angle) * 0.001;
+          dy = Math.sin(angle) * 0.001;
+          dist = 0.001;
+        }
+
+        const minDist = Math.max(baseMinDist, (a.r + b.r) * 3.2);
+        if (dist >= minDist) continue;
+
+        const push = ((minDist - dist) / dist) * 0.34;
+        const ox = dx * push;
+        const oy = dy * push;
+        a.x -= ox;
+        a.y -= oy;
+        b.x += ox;
+        b.y += oy;
+      }
+    }
+
+    for (let i = 0; i < relaxed.length; i++) {
+      const d = relaxed[i];
+      d.x += (anchors[i].x - d.x) * 0.035;
+      d.y += (anchors[i].y - d.y) * 0.035;
+      d.x = clamp(d.x, pad, w - pad);
+      d.y = clamp(d.y, pad, h - pad);
+    }
+  }
+
+  return relaxed;
 }
 
 function scaleProjectionToCanvas(projection: number[][], books: ConstellationBook[], w: number, h: number): Dot[] {
@@ -124,7 +181,7 @@ function scaleProjectionToCanvas(projection: number[][], books: ConstellationBoo
   const rangeX = maxX - minX || 1;
   const rangeY = maxY - minY || 1;
 
-  return projection.map(([x, y], idx) => {
+  const dots = projection.map(([x, y], idx) => {
     const nx = (x - minX) / rangeX;
     const ny = (y - minY) / rangeY;
     const b = books[idx];
@@ -137,6 +194,8 @@ function scaleProjectionToCanvas(projection: number[][], books: ConstellationBoo
       r,
     };
   });
+
+  return relaxDots(dots, w, h, pad);
 }
 
 const AMBER = '#e8b765';
@@ -189,13 +248,21 @@ export default function Constellation({ onOpenBook }: ConstellationProps) {
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => {
+    const updateSize = () => {
       const r = el.getBoundingClientRect();
-      setSize({ w: r.width, h: r.height });
+      setSize(prev => {
+        const w = Math.round(r.width);
+        const h = Math.round(r.height);
+        return prev.w === w && prev.h === h ? prev : { w, h };
+      });
+    };
+    const ro = new ResizeObserver(() => {
+      updateSize();
     });
+    updateSize();
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [loading, books.length, minimumRequired]);
 
   // UMAP computation
   useEffect(() => {
@@ -225,7 +292,7 @@ export default function Constellation({ onOpenBook }: ConstellationProps) {
 
     setUmapRunning(true);
     const embeddings = books.map(b => b.avg_embedding);
-    const nNeighbors = Math.max(1, Math.min(minimumRequired, Math.floor(books.length / 2), books.length - 1));
+    const nNeighbors = layoutNeighborCount(books.length);
 
     const umap = new UMAP({
       nNeighbors,
