@@ -524,11 +524,34 @@ function AppShell() {
   );
 }
 
+function HomeRoute() {
+  const [checking, setChecking] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api.me()
+      .then(() => { setAuthenticated(true); navigate('/dashboard', { replace: true }); })
+      .catch(() => { setAuthenticated(false); })
+      .finally(() => setChecking(false));
+  }, [navigate]);
+
+  if (checking) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--text-muted)' }}>
+      Loading...
+    </div>
+  );
+
+  if (authenticated) return null;
+
+  return <LandingPage />;
+}
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<HomeRoute />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/authorize" element={<AUTHORIZE />} />
         <Route path="*" element={<ErrorBoundary><AppShell /></ErrorBoundary>} />
