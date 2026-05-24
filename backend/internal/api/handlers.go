@@ -517,3 +517,33 @@ func (h *Handler) HandleDeleteCluster(w http.ResponseWriter, r *http.Request, us
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+// GET /api/constellation
+func (h *Handler) HandleConstellation(w http.ResponseWriter, r *http.Request, userID string) {
+	minBooks := h.cfg.ConstellationMinBooks
+	edgeThreshold := h.cfg.ConstellationEdgeThreshold
+
+	books, err := h.db.GetConstellationData(r.Context(), userID)
+	if err != nil {
+		slog.Error("Failed to load constellation", "error", err)
+		writeError(w, http.StatusInternalServerError, "Failed to load constellation")
+		return
+	}
+
+	if len(books) < minBooks {
+		writeJSON(w, http.StatusOK, map[string]interface{}{
+			"books":                []any{},
+			"minimum_required":     minBooks,
+			"current_count":        len(books),
+			"edge_threshold_floor": edgeThreshold,
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"books":                books,
+		"minimum_required":     minBooks,
+		"current_count":        len(books),
+		"edge_threshold_floor": edgeThreshold,
+	})
+}

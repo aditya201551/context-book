@@ -397,3 +397,43 @@ func (db *DB) SearchPages(ctx context.Context, userID string, queryEmbedding pgv
 	}
 	return results, nil
 }
+
+type ConstellationBook struct {
+	BookID       string          `json:"book_id"`
+	Title        string          `json:"title"`
+	Tags         []string        `json:"tags"`
+	Source       string          `json:"source"`
+	PageCount    int             `json:"page_count"`
+	TokenCount   int             `json:"token_count"`
+	AvgEmbedding pgvector.Vector `json:"avg_embedding"`
+}
+
+func (db *DB) GetConstellationData(ctx context.Context, userID string) ([]ConstellationBook, error) {
+	query := `
+		SELECT b.id, b.title, b.tags, b.source,
+			COALESCE(p.page_count, 0),
+			COALESCE(p.token_count, 0),
+			b.avg_embedding
+		FROM context_books b
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*) AS page_count, COALESCE(SUM(token_count), 0) AS token_count
+			FROM context_book_pages WHERE book_id = b.id AND user_id = b.user_id
+		) p ON true
+		WHERE b.user_id = $1 AND b.avg_embedding IS NOT NULL
+	`
+	rows, err := db.Pool.Query(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("constellation query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var results []ConstellationBook
+	for rows.Next() {
+		var b ConstellationBook
+		if err := rows.Scan(&b.BookID, &b.Title, &b.Tags, &b.Source, &b.PageCount, &b.TokenCount, &b.AvgEmbedding); err != nil {
+			return nil, err
+		}
+		results = append(results, b)
+	}
+	return results, nil
+}

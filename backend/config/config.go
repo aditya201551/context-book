@@ -9,21 +9,23 @@ import (
 )
 
 type Config struct {
-	Port               string
-	MCPPort            string
-	Env                string
-	DatabaseURL        string
-	VoyageAPIKey       string
-	VoyageModel        string
-	VoyageDimension    int
-	APIKeySalt         string
-	PublicURL          string // base URL for the API server (external); env: PUBLIC_URL
-	FrontendURL        string // base URL for the frontend (external); env: FRONTEND_URL
-	CookieDomain       string // domain for session cookies; env: COOKIE_DOMAIN
-	GoogleClientID     string // env: GOOGLE_CLIENT_ID
-	GoogleClientSecret string // env: GOOGLE_CLIENT_SECRET
-	GitHubClientID     string // env: GITHUB_CLIENT_ID
-	GitHubClientSecret string // env: GITHUB_CLIENT_SECRET
+	Port                        string
+	MCPPort                     string
+	Env                         string
+	DatabaseURL                 string
+	VoyageAPIKey                string
+	VoyageModel                 string
+	VoyageDimension             int
+	APIKeySalt                  string
+	PublicURL                   string
+	FrontendURL                 string
+	CookieDomain                string
+	GoogleClientID              string
+	GoogleClientSecret          string
+	GitHubClientID              string
+	GitHubClientSecret          string
+	ConstellationMinBooks       int
+	ConstellationEdgeThreshold  float64
 }
 
 func Load() (*Config, error) {
@@ -54,6 +56,20 @@ func Load() (*Config, error) {
 
 	cfg.PublicURL = getEnvOrDefault("PUBLIC_URL", "http://localhost:"+cfg.Port)
 	cfg.FrontendURL = getEnvOrDefault("FRONTEND_URL", "http://localhost:5173")
+
+	constellationMinStr := getEnvOrDefault("CONSTELLATION_MIN_BOOKS", "5")
+	constellationMin, err := strconv.Atoi(constellationMinStr)
+	if err != nil {
+		constellationMin = 5
+	}
+	cfg.ConstellationMinBooks = constellationMin
+
+	constellationThresholdStr := getEnvOrDefault("CONSTELLATION_EDGE_THRESHOLD", "0.6")
+	constellationThreshold, err := strconv.ParseFloat(constellationThresholdStr, 64)
+	if err != nil || constellationThreshold < 0 || constellationThreshold > 1 {
+		constellationThreshold = 0.6
+	}
+	cfg.ConstellationEdgeThreshold = constellationThreshold
 
 	if cfg.DatabaseURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL is required")

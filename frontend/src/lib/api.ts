@@ -1,4 +1,4 @@
-import type { ListBooksResponse, SearchResponse, Book, BookSummary, User, TokenInfo, ClientInfo, UserCluster } from '../types';
+import type { ListBooksResponse, SearchResponse, Book, BookSummary, User, TokenInfo, ClientInfo, UserCluster, ConstellationBook } from '../types';
 
 const BASE = (import.meta.env.VITE_API_URL as string) ?? '';
 
@@ -143,4 +143,14 @@ export const api = {
   createCluster: (body: { name: string; tags: string[]; color: string }) => api.post('/api/clusters', body),
   updateCluster: (id: string, body: { name: string; tags: string[]; color: string }) => api.put(`/api/clusters/${id}`, body),
   deleteCluster: (id: string) => api.del(`/api/clusters/${id}`),
+  constellation: async (): Promise<{ books: ConstellationBook[]; minimum_required?: number; current_count?: number; edge_threshold_floor?: number }> => {
+    const data = await api.get('/api/constellation');
+    const books = (data.books || []).map((b: any) => ({ ...b, tags: b.tags || [] })) as ConstellationBook[];
+    return {
+      books,
+      minimum_required: data.minimum_required,
+      current_count: data.current_count,
+      edge_threshold_floor: data.edge_threshold_floor,
+    };
+  },
 };

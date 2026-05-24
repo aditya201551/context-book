@@ -18,6 +18,7 @@ interface SidebarProps {
 const NAV_ITEMS = [
   { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
   { id: 'library', icon: 'library', label: 'Library' },
+  { id: 'constellation', icon: 'stars', label: 'Constellation' },
   { id: 'settings', icon: 'settings', label: 'Settings' },
 ];
 

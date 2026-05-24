@@ -112,3 +112,13 @@ export interface UserCluster {
   sort_order: number;
   created_at: string;
 }
+
+export interface ConstellationBook {
+  book_id: string;
+  title: string;
+  tags: string[];
+  source: string;
+  page_count: number;
+  token_count: number;
+  avg_embedding: number[];
+}

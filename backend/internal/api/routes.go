@@ -23,4 +23,5 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/clusters", h.protected(http.MethodPost, h.HandleCreateCluster))
 	mux.HandleFunc("PUT /api/clusters/{id}", h.protected(http.MethodPut, h.HandleUpdateCluster))
 	mux.HandleFunc("DELETE /api/clusters/{id}", h.protected(http.MethodDelete, h.HandleDeleteCluster))
+	mux.HandleFunc("GET /api/constellation", h.protected(http.MethodGet, h.HandleConstellation))
 }

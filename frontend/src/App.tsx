@@ -19,6 +19,7 @@ import BrandMark from './components/BrandMark';
 
 const Library = lazy(() => import('./components/Library'));
 const Settings = lazy(() => import('./components/Settings'));
+const Constellation = lazy(() => import('./components/Constellation'));
 
 const AUTHORIZE = () => {
   const [clientInfo, setClientInfo] = useState<any>(null);
@@ -215,6 +216,7 @@ function AppShell() {
     const path = location.pathname;
     if (path === '/library') { setRoute('library'); setView('library'); }
     else if (path === '/settings') { setRoute('settings'); setView('settings'); }
+    else if (path === '/constellation') { setRoute('constellation'); setView('search'); }
     else if (path === '/search') { setRoute('search'); setView('search'); }
     else { setRoute('dashboard'); setView('dashboard'); }
   }, [location.pathname]);
@@ -306,6 +308,7 @@ function AppShell() {
     setRoute(id);
     if (id === 'dashboard') navigate('/dashboard');
     else if (id === 'library') navigate('/library');
+    else if (id === 'constellation') navigate('/constellation');
     else if (id === 'settings') navigate('/settings');
   }, [navigate]);
 
@@ -473,6 +476,11 @@ function AppShell() {
               <div className="empty-state-title">Semantic search lives in ⌘K</div>
               <div>We chose command-palette style for speed. Press <span className="kbd">⌘K</span> now.</div>
             </div>
+          )}
+          {route === 'constellation' && (
+            <Suspense fallback={<div className="empty-hint mono" style={{padding: 40}}>Loading…</div>}>
+            <Constellation onOpenBook={handleOpenBook} />
+            </Suspense>
           )}
         </div>
       </div>

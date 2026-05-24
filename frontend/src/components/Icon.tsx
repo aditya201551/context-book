@@ -31,6 +31,7 @@ const ICONS: Record<string, string | string[]> = {
   copy: ['M9 9h10v10H9z','M5 15V5h10'],
   import: ['M12 3v12','M7 10l5 5 5-5','M5 21h14'],
   logout: ['M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4', 'M16 17l5-5-5-5M21 12H9'],
+  stars: ['M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z', 'M5 3v4', 'M3 5h4'],
 };
 
 export default function Icon({ name, size = 16, stroke = 1.75 }: IconProps) {
