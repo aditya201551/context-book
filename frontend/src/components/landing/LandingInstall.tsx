@@ -23,12 +23,14 @@ interface ClientConfig {
 
 const cursorConfig = btoa(JSON.stringify({ url: MCP_URL }));
 const cursorDeeplink = `cursor://anysphere.cursor-deeplink/mcp/install?name=context-book&config=${cursorConfig}`;
+const claudeAiDeeplink = `https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=ContextBook&connectorUrl=${encodeURIComponent(MCP_URL)}`;
 
 const CLIENTS: ClientConfig[] = [
   {
     id: 'claude-ai',
     label: 'Claude.ai',
     type: 'steps',
+    deeplink: claudeAiDeeplink,
     walkthrough: [
       { text: 'Open Claude (claude.ai) → Settings → Connectors' },
       { text: 'Click "Add custom connector"' },
@@ -170,8 +172,28 @@ export default function LandingInstall() {
                   <span className="code-file">{selected.label}</span>
                 </div>
                 <div className="code-body">
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+                    {selected.deeplink && (
+                      <a
+                        className="btn btn-primary"
+                        href={selected.deeplink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: 13, padding: '10px 18px' }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                          <polyline points="15 3 21 3 21 9"/>
+                          <line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                        Open in Claude.ai
+                      </a>
+                    )}
+                    <span className="term-meta">Connector name and URL are pre-filled</span>
+                  </div>
+                  <div className="term-divider" style={{ margin: '0 0 16px 0' }} />
                   <p className="install-card-body" style={{ marginBottom: 16 }}>
-                    Claude on the web supports MCP via the Connectors UI. Follow the steps below — your endpoint URL is pre-filled and ready to paste.
+                    Alternatively, follow the steps below — your endpoint URL is ready to paste.
                   </p>
                   <ol style={{ paddingLeft: 20, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {selected.walkthrough?.map((s, i) => (
