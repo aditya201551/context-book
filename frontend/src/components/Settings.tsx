@@ -324,13 +324,7 @@ function InstallTab() {
   const MCP_URL = (import.meta.env.VITE_MCP_URL as string) || 'http://localhost:8081/mcp';
   const cursorConfig = btoa(JSON.stringify({ url: MCP_URL }));
   const cursorDeeplink = `cursor://anysphere.cursor-deeplink/mcp/install?name=context-book&config=${cursorConfig}`;
-  const claudeWebSteps = [
-    'Open Claude (claude.ai) → Settings → Connectors',
-    'Click "Add custom connector"',
-    `Paste your MCP URL: ${MCP_URL}`,
-    'Sign in with your ContextBook account when prompted',
-    'Authorize the connector — done.'
-  ];
+  const claudeAiDeeplink = `https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=ContextBook&connectorUrl=${encodeURIComponent(MCP_URL)}`;
 
   return (
     <div className="settings-tab-content">
@@ -401,16 +395,14 @@ function InstallTab() {
             </div>
           </div>
           <p className="install-card-body">
-            Claude on the web supports MCP via the Connectors UI. Follow the steps below — your endpoint URL is pre-filled and ready to paste.
+            Claude on the web supports MCP via the Connectors UI. Click below — the connector name and endpoint URL are pre-filled.
           </p>
-          <ol className="install-steps">
-            {claudeWebSteps.map((s, i) => (
-              <li key={i} className="install-step">
-                <span className="install-step-text">{s}</span>
-                {s.includes(MCP_URL) && <CopyBtn text={MCP_URL} />}
-              </li>
-            ))}
-          </ol>
+          <div className="install-actions">
+            <a className="btn btn-primary install-btn" href={claudeAiDeeplink} target="_blank" rel="noopener noreferrer">
+              <Icon name="sparkle" size={13}/> Open in Claude.ai
+            </a>
+            <span className="install-meta mono">Connector name and URL are pre-filled</span>
+          </div>
           <div className="install-fineprint mono">
             Available on Claude Pro, Team, and Enterprise plans.
           </div>
