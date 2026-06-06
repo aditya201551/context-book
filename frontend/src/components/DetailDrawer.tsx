@@ -1,18 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { Book } from '../types';
 import { getSource, fmtDate, ctxTokens } from '../lib/utils';
 import { useFocusTrap } from '../lib/useFocusTrap';
 import { api } from '../lib/api';
 import Icon from './Icon';
 
-function PageBlock({ page, i, forceExpand }: { page: { page_index: number; content: string }; i: number; forceExpand?: boolean }) {
+function PageBlock({ page, i, forceExpand, bookId, onPageUpdated }: {
+  page: { page_index: number; content: string };
+  i: number;
+  forceExpand?: boolean;
+  bookId: string;
+  onPageUpdated: (pageIndex: number, content: string) => void;
+}) {
   const [expanded, setExpanded] = useState(forceExpand || false);
   const [copied, setCopied] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(page.content);
+  const [saving, setSaving] = useState(false);
   const blockRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const tok = Math.ceil(page.content.length / 4);
-  const lines = page.content.split('\n');
-  const preview = lines.slice(0, 3).join('\n');
-  const hasMore = lines.length > 3;
 
   useEffect(() => {
     if (forceExpand && blockRef.current) {
@@ -21,11 +30,41 @@ function PageBlock({ page, i, forceExpand }: { page: { page_index: number; conte
     }
   }, [forceExpand]);
 
+  useEffect(() => {
+    if (editing && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.selectionStart = textareaRef.current.value.length;
+    }
+  }, [editing]);
+
   const handleCopyPage = () => {
     navigator.clipboard.writeText(page.content).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1400);
     });
+  };
+
+  const handleEdit = () => {
+    setDraft(page.content);
+    setEditing(true);
+    setExpanded(true);
+  };
+
+  const handleCancel = () => {
+    setDraft(page.content);
+    setEditing(false);
+  };
+
+  const handleSave = async () => {
+    if (draft === page.content) { setEditing(false); return; }
+    setSaving(true);
+    try {
+      await api.updatePage(bookId, page.page_index, draft);
+      onPageUpdated(page.page_index, draft);
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -34,14 +73,27 @@ function PageBlock({ page, i, forceExpand }: { page: { page_index: number; conte
         <span className="chunk-idx mono">page_{String(page.page_index).padStart(2,'0')}</span>
         <span className="chunk-tok mono">~{tok} tok</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-          <button
-            className="chunk-copy-btn"
-            onClick={handleCopyPage}
-            title="Copy page"
-          >
-            {copied ? <><Icon name="check" size={11} /> Copied</> : <><Icon name="copy" size={11} /> Copy</>}
-          </button>
-          {hasMore && (
+          {!editing && (
+            <>
+              <button className="chunk-copy-btn" onClick={handleCopyPage} title="Copy page">
+                {copied ? <><Icon name="check" size={11} /> Copied</> : <><Icon name="copy" size={11} /> Copy</>}
+              </button>
+              <button className="chunk-expand-btn" onClick={handleEdit} title="Edit page">
+                <Icon name="edit" size={11} /> Edit
+              </button>
+            </>
+          )}
+          {editing && (
+            <>
+              <button className="chunk-copy-btn" onClick={handleCancel} disabled={saving}>
+                <Icon name="close" size={11} /> Cancel
+              </button>
+              <button className="chunk-expand-btn" onClick={handleSave} disabled={saving}>
+                <Icon name="check" size={11} /> {saving ? 'Saving…' : 'Save'}
+              </button>
+            </>
+          )}
+          {!editing && (
             <button className="chunk-expand-btn" onClick={() => setExpanded(e => !e)}>
               {expanded
                 ? <><Icon name="arrUp" size={11} stroke={2}/> Collapse</>
@@ -51,16 +103,26 @@ function PageBlock({ page, i, forceExpand }: { page: { page_index: number; conte
         </div>
       </div>
       <div className="chunk-content">
-        {(expanded ? page.content : preview).split('\n').map((line, li) => {
-          if (!line.trim()) return <div key={li} className="dc-spacer"/>;
-          if (line.startsWith('Module ') && line.includes(':')) return <div key={li} className="chunk-module-head">{line}</div>;
-          if (line.startsWith('- ') || line.startsWith('• ')) return <div key={li} className="dc-bullet">{line.slice(2)}</div>;
-          return <p key={li}>{line}</p>;
-        })}
-        {!expanded && hasMore && (
-          <button className="chunk-read-more" onClick={() => setExpanded(true)}>
-            +{lines.length - 3} more lines — click to expand
-          </button>
+        {editing ? (
+          <textarea
+            ref={textareaRef}
+            className="chunk-edit-textarea"
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            rows={Math.max(6, draft.split('\n').length + 2)}
+            spellCheck={false}
+          />
+        ) : (
+          <div className="chunk-markdown">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {expanded ? page.content : page.content.split('\n').slice(0, 3).join('\n')}
+            </ReactMarkdown>
+            {!expanded && page.content.split('\n').length > 3 && (
+              <button className="chunk-read-more" onClick={() => setExpanded(true)}>
+                +{page.content.split('\n').length - 3} more lines — click to expand
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -87,7 +149,14 @@ interface DetailDrawerProps {
 export default function DetailDrawer({ book, focusPageIndex, onClose, onEdit, onDelete, onOpenBook }: DetailDrawerProps) {
   const [related, setRelated] = useState<RelatedResult[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
+  const [pages, setPages] = useState(book?.pages || []);
   const trapRef = useFocusTrap(!!book);
+
+  useEffect(() => { setPages(book?.pages || []); }, [book?.book_id]);
+
+  const handlePageUpdated = (pageIndex: number, content: string) => {
+    setPages(prev => prev.map(p => p.page_index === pageIndex ? { ...p, content } : p));
+  };
 
   useEffect(() => {
     if (!book) { setRelated([]); return; }
@@ -109,11 +178,11 @@ export default function DetailDrawer({ book, focusPageIndex, onClose, onEdit, on
     parts.push(`# ${book.title}`);
     if (book.tags.length) parts.push(`Tags: ${book.tags.map(t => `#${t}`).join(' ')}`);
     parts.push('');
-    (book.pages || []).forEach((p, i) => {
+    pages.forEach((p, i) => {
       parts.push(`## Page ${String(p.page_index).padStart(2, '0')}`);
       parts.push('');
       parts.push(p.content);
-      if (i < (book.pages || []).length - 1) parts.push('');
+      if (i < pages.length - 1) parts.push('');
     });
     navigator.clipboard.writeText(parts.join('\n'));
   };
@@ -153,8 +222,8 @@ export default function DetailDrawer({ book, focusPageIndex, onClose, onEdit, on
         </div>
 
         <div className="drawer-chunks">
-          {(book.pages || []).map((page, i) => (
-            <PageBlock key={page.id || i} page={page} i={i} forceExpand={focusPageIndex === page.page_index} />
+          {pages.map((page, i) => (
+            <PageBlock key={page.id || i} page={page} i={i} forceExpand={focusPageIndex === page.page_index} bookId={book.book_id} onPageUpdated={handlePageUpdated} />
           ))}
         </div>
 
